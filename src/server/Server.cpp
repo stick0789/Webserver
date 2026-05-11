@@ -205,7 +205,7 @@ bool Server::acceptNewConnection(int fd)
 bool Server::readFromClient(int fd)
 {
     char buffer[READ_BUFFER];
-   std::map<int, Client>::iterator it = this->_clients.find(fd);
+    std::map<int, Client>::iterator it = this->_clients.find(fd);
     if (it == this->_clients.end())
         return (false);
     Client &client = it->second;
@@ -252,6 +252,35 @@ bool Server::readFromClient(int fd)
         return (true);
     }
     HTTPRequest request = client.getParser().getRequest();
+    if (request.getErrorCode() != 0)
+    {
+        std::cout << "\033[93m[INFO] Parse error " << request.getErrorCode()
+                  << " for fd " << fd << "\033[0m" << std::endl;
+ 
+        HTTPResponse errResp = HTTPResponse::buildErrorResponse(request.getErrorCode());
+        std::string serialized = errResp.serialize();
+ 
+        int responseFd = responseToFd(serialized);
+        if (responseFd < 0)
+            return (false);
+ 
+        client.setResponseFd(responseFd);
+        setClientEvents(fd, POLLOUT);
+        return (true);
+    }
+    
+    std::string serialized = response.serialize();
+ 
+    int responseFd = responseFd(serialized);
+    if (responseFd < 0)
+        return (false);
+ 
+    client.setResponseFd(responseFd);
+    setClientEvents(fd, POLLOUT);
+ 
+    // ── Keep-alive: resetear el parser para el siguiente request ───────────
+    if (request.shouldKeepAlive())
+        client.getParser().reset();
 
     return (true);
 }
