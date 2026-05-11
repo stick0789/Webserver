@@ -34,6 +34,30 @@ void printServerInfo(std::string &host, int port, const std::vector<std::string>
             }
 }
 
+static int responseToFd(const std::string &responseStr)
+{
+    int pipeFds[2];
+    if (pipe(pipeFds) < 0)
+    {
+        std::cout << "\033[1;31m[ERROR] pipe() failed.\033[0m" << std::endl;
+        return (-1);
+    }
+ 
+    // Escribir toda la respuesta en el extremo de escritura y cerrarlo
+    // Para respuestas grandes esto bloquearía si el pipe se llena,
+    // pero en webserv de 42 las respuestas caben en el buffer del kernel (64KB típico).
+    ssize_t written = write(pipeFds[1], responseStr.c_str(), responseStr.size());
+    close(pipeFds[1]);
+ 
+    if (written < 0)
+    {
+        close(pipeFds[0]);
+        return (-1);
+    }
+    return (pipeFds[0]); // fd de lectura
+}
+
+
 bool Server::setupSockets(void)
 {
     std::vector<std::string>    openedHosts;
@@ -269,9 +293,10 @@ bool Server::readFromClient(int fd)
         return (true);
     }
     
+    HTTPResponse response = HTTPResponse::buildErrorResponse(501);
     std::string serialized = response.serialize();
  
-    int responseFd = responseFd(serialized);
+    int responseFd = responseToFd(serialized);
     if (responseFd < 0)
         return (false);
  
