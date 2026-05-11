@@ -1,0 +1,1 @@
+print("Status: 200 OK\r\nContent-Type: text/html\r\n\r\n<h1>Hola</h1>")

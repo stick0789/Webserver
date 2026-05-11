@@ -1,0 +1,44 @@
+1. Variables d'Entorn (initEnv)
+Un CGI no rep la informació per la línia de comandes (com un programa normal), sinó a través de variables d'entorn. 
+Les funcio que tens al codi serveixen per omplir un std::map<std::string, std::string> amb dades de la HttpRequest.
+
+Les variables imprescindibles són:
+REQUEST_METHOD: "GET" o "POST".
+QUERY_STRING: El que hi ha després del ? a l'URL (només per a GET).
+CONTENT_LENGTH: La mida del body (obligatori per a POST).
+PATH_TRANSLATED: La ruta real del fitxer al teu disc dur.
+SCRIPT_NAME: El nom de l'script.
+
+2. L'Execució (execute)
+Aquesta és la part més crítica. Aquí és on fas que el teu servidor "parli" amb l'intèrpret (Python, PHP, Bash). Necessites quatre passos:
+
+A. Els Pipes (pipe())
+Necessites pipes per redirigir la informació.
+Un pipe perquè el servidor escrigui el Body de la request cap al CGI (si és un POST).
+Un pipe perquè el servidor llegeixi la resposta que genera el CGI.
+
+B. El procés fill (fork())
+El Fill: Utilitza dup2() per connectar els seus STDIN i STDOUT als pipes. Després crida a execve().
+El Pare: Escriu el body al pipe d'entrada (si cal), espera que l'script acabi i llegeix tota la sortida del pipe de sortida.
+
+C. L'execució real (execve())
+execve(executable_path, argv, envp);
+executable_path: El camí a l'intèrpret (ex: /usr/bin/python3).
+argv: Una llista on argv[0] és l'intèrpret i argv[1] és el camí de l'script.
+envp: Les variables d'entorn que has preparat a initEnv convertides a char.
+
+3. El Flux d'Informació (Què va on?)
+Perquè no et perdis amb les funcions, el flux és aquest:
+handleTarget: Detecta que la petició és per a un CGI (per l'extensió o la carpeta cgi-bin).
+initEnv: Agafa la Request i la Location per omplir el mapa de variables d'entorn.
+execute:
+Crea els pipes.
+Fa el fork.
+El fill fa execve.
+El pare llegeix el resultat i el guarda en un std::string.
+ResponseBuilder: Rep aquest string, el separa en "Capçaleres del CGI" i "Cos del CGI" i ho posa dins l'objecte Response.
+
+Consell per debugar:
+Si l'script CGI no retorna res o dona error:
+Revisa que el fitxer tingui permisos d'execució (chmod +x).
+Assegura't que l'script escrigui primer el tipus de contingut, per exemple: print("Content-Type: text/html\n\n"). Sense el doble salt de línia final (\n\n), el navegador no entendrà la resposta.

@@ -1,0 +1,191 @@
+-----------------------------------------------------------------------------------------------
+Organización y asignación de roles:
+
+Important :
+
+### **Persona 1: Core (Sockets y Conexiones) + Config Parser --> Raúl 
+### **Persona 2: Parsing y HTTP Protocol Handler --> David
+### **Persona 3: Router + CGI + File Handler --> Pau
+
+Ventajas de esta distribución
+✅ Persona 1 tiene todo lo necesario desde el inicio (config + sockets)
+✅ Persona 2 se enfoca SOLO en el protocolo HTTP (más coherente)
+✅ Persona 3 tiene la parte más compleja (CGI) pero trabaja independiente
+✅ Menos dependencias cruzadas entre personas
+✅ Cada módulo es más autocontenido
+
+
+--------------------------------
+# Desglose detallado por persona
+
+## **Persona 1: Core (Sockets y Conexiones) + Config Parser **
+Misión
+Inicializar el servidor y mantenerlo vivo aceptando miles de conexiones sin bloquearse.
+
+Tareas
+Parser del archivo de configuración (leer, validar, crear estructuras)
+Estructura de datos para almacenar la config (servidores virtuales, puertos, rutas, límites)
+Setup de sockets (listening sockets) usando la configuración parseada
+Implementación de multiplexing (poll/select/epoll)
+Gestión de conexiones (accept, read, write)
+Timeouts y cierre de conexiones
+Gestionar buffers de lectura/escritura
+
+Reto
+Parsear y validar un archivo de configuración tipo Nginx
+Gestionar que la lectura de sockets no sea bloqueante (manejar datos parciales)
+
+Entregable
+Servidor que:
+Lee y valida un archivo de configuración
+Inicializa sockets según la config
+Acepta conexiones y lee datos raw
+Pasa los datos raw completos a Persona 2
+
+Herramientas y lenguajes
+C++98: Clases ConfigParser, ServerConfig, LocationConfig, Server, Socket
+System calls: socket(), bind(), listen(), accept(), poll()/select()
+STL: std::vector, std::map, std::string
+Bash: Scripts para testear diferentes configs y conexiones
+
+Tiempo estimado
+Estudio inicial: 8-10 horas (config parsing + sockets)
+Implementación config: 12-16 horas
+Implementación sockets: 14-18 horas
+Testing integrado: 6-8 horas
+Total: 40-52 horas (~5-7 jornadas)
+
+
+## **Persona 2: Parsing y HTTP Protocol Handler**
+Misión
+Dar sentido a los bytes que llegan y preparar respuestas HTTP válidas.
+
+Tareas
+Parser de requests HTTP (método, URI, headers, body)
+Generación de responses HTTP (status codes, headers, body)
+Validación de requests según RFC 7230/7231
+Manejo de chunked transfer encoding
+Gestión de headers (Content-Length, Content-Type, etc.)
+Páginas de error (404, 500, 405, etc.)
+MIME types para diferentes extensiones
+
+Reto
+Leer los RFCs, manejar chunked transfer y validar peticiones HTTP 1.1 correctamente.
+
+Entregable
+Sistema que:
+Recibe texto raw de Persona 1
+Lo convierte en una clase HTTPRequest estructurada
+Genera HTTPResponse válidas según el request
+Devuelve el response como string a Persona 1 para enviar
+
+Herramientas y lenguajes
+C++98: Clases HTTPRequest, HTTPResponse, RequestParser
+Bash/Python: Scripts para generar requests de prueba
+HTML/CSS: Páginas de error básicas
+Herramientas: curl, navegador web
+
+Tiempo estimado
+Estudio inicial: 6-8 horas (RFC HTTP, estructura)
+Implementación parser: 12-16 horas
+Implementación responses: 10-14 horas
+Error handling y MIME: 4-6 horas
+Total: 32-44 horas (~4-6 jornadas)
+
+
+## **Persona 3: Router + CGI + File Handler**
+Misión
+Decidir qué hacer con la petición (servir archivo, borrarlo o ejecutar script).
+
+Tareas
+Implementar la lógica de rutas (routing según configuración)
+Manejo de métodos GET (servir archivos estáticos, directory listing)
+Manejo de métodos POST (upload de archivos)
+Manejo de métodos DELETE (borrar archivos)
+Sistema CGI completo (fork, pipes, execve)
+Gestión de permisos y validaciones de seguridad
+Manejo de redirecciones
+
+Reto
+Conectar la entrada/salida de los scripts CGI sin crear zombies ni bloqueos.
+
+Entregable
+Sistema que:
+Recibe HTTPRequest de Persona 2
+Consulta la config de Persona 1 para saber qué hacer
+Ejecuta la acción (servir archivo, CGI, delete)
+Devuelve el body del response a Persona 2
+
+Herramientas y lenguajes
+C++98: Clases RequestHandler, CGIHandler, FileManager
+System calls: fork(), pipe(), dup2(), execve(), waitpid()
+PHP/Python: Scripts CGI de prueba
+Bash: Scripts de testing
+
+Tiempo estimado
+Estudio inicial: 5-7 horas (CGI, file handling)
+Implementación GET/POST/DELETE: 12-16 horas
+Implementación CGI: 16-22 horas (la parte más difícil)
+Testing y debugging: 8-10 horas
+Total: 41-55 horas (~5-7 jornadas)
+
+
+-----------------------------------------------------------------------------------------------
+Flujo de trabajo integrado:
+
+┌─────────────────────────────────────────────────────────┐
+│ PERSONA 1: Core + Config                                │
+│ ┌─────────────┐    ┌──────────────┐                     │
+│ │ Config File │───>│ ConfigParser │                     │
+│ └─────────────┘    └──────┬───────┘                     │
+│                           │                             │
+│                           v                             │
+│                     ┌─────────────┐                     │
+│                     │ServerConfig │                     │
+│                     └──────┬──────┘                     │
+│                            │                            │
+│                            v                            │
+│      ┌──────────────────────────────────┐               │
+│      │  Server (poll/sockets/buffers)   │               │
+│      └─────────┬────────────────────────┘               │
+└────────────────┼────────────────────────────────────────┘
+                 │ raw request data
+                 v
+┌─────────────────────────────────────────────────────────┐
+│ PERSONA 2: HTTP Protocol                                │
+│      ┌──────────────┐                                   │
+│      │ RequestParser│                                   │
+│      └──────┬───────┘                                   │
+│             │                                           │
+│             v                                           │
+│      ┌─────────────┐                                    │
+│      │HTTPRequest  │──────────────────┐                 │
+│      └─────────────┘                  │                 │
+└───────────────────────────────────────┼─────────────────┘
+                                        │
+                                        v
+┌─────────────────────────────────────────────────────────┐
+│ PERSONA 3: Router + CGI                                 │
+│      ┌──────────────────┐                               │
+│      │ RequestHandler   │                               │
+│      │  - GET/POST/DEL  │                               │
+│      │  - CGI execution │                               │
+│      └────────┬─────────┘                               │
+│               │ response body                           │
+└───────────────┼─────────────────────────────────────────┘
+                v
+┌─────────────────────────────────────────────────────────┐
+│ PERSONA 2: HTTP Protocol                                │
+│      ┌──────────────┐                                   │
+│      │HTTPResponse  │                                   │
+│      └──────┬───────┘                                   │
+│             │ formatted HTTP response                   │
+└─────────────┼───────────────────────────────────────────┘
+              v
+┌─────────────────────────────────────────────────────────┐
+│ PERSONA 1: Core                                         │
+│      ┌──────────────┐                                   │
+│      │Server::send()│                                   │
+│      └──────────────┘                                   │
+└─────────────────────────────────────────────────────────┘
+
