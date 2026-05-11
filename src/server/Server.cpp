@@ -293,6 +293,7 @@ bool Server::readFromClient(int fd)
         return (true);
     }
     
+    //Aqui se integra con la parte de Pau - Response builder 
     HTTPResponse response = HTTPResponse::buildErrorResponse(501);
     std::string serialized = response.serialize();
  

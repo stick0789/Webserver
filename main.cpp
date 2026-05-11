@@ -10,8 +10,94 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "web_server.hpp"
 
+/* ************************************************************************** */
+/*                                                                            */
+/*   main.cpp  —  Prueba de integración: Server + RequestParser              */
+/*                                                                            */
+/*   Uso:                                                                     */
+/*     ./webserv                        (usa conf/Testing.conf por defecto)   */
+/*     ./webserv conf/Default.conf      (archivo de configuración custom)     */
+/*                                                                            */
+/*   Para probar desde otro terminal:                                         */
+/*     curl -v http://127.0.0.1:8080/home/                                   */
+/*     curl -v -X POST http://127.0.0.1:8080/upload/ -d "hola"               */
+/*     curl -v http://127.0.0.1:8080/ruta/que/no/existe                      */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "web_server.hpp"   // Include global del proyecto
+
+#include <iostream>
+#include <csignal>
+
+// ─── Signal handler para Ctrl+C limpio ──────────────────────────────────────
+
+static volatile bool g_running = true;
+
+static void signalHandler(int sig)
+{
+    (void)sig;
+    g_running = false;
+    std::cout << "\n\033[93m[INFO] Signal received. Shutting down...\033[0m" << std::endl;
+}
+
+// ─── main ────────────────────────────────────────────────────────────────────
+
+int main(int argc, char **argv)
+{
+    // Capturar Ctrl+C para salir limpiamente
+    signal(SIGINT,  signalHandler);
+    signal(SIGTERM, signalHandler);
+    // Ignorar SIGPIPE (evita crash si el cliente cierra la conexión mientras enviamos)
+    signal(SIGPIPE, SIG_IGN);
+
+    // ── 1. Seleccionar el archivo de configuración ──────────────────────────
+    std::string configFile = "conf/Testing.conf";
+    if (argc == 2)
+        configFile = argv[1];
+    else if (argc > 2)
+    {
+        std::cerr << "\033[1;31m[ERROR] Usage: " << argv[0]
+                  << " [config_file]\033[0m" << std::endl;
+        return (1);
+    }
+
+    std::cout << "\033[96m[INFO] Loading config: " << configFile << "\033[0m" << std::endl;
+
+    // ── 2. Parsear el archivo de configuración ──────────────────────────────
+    ConfigParser config;
+    if (!config.parseConfigFile(configFile))
+    {
+        std::cerr << "\033[1;31m[ERROR] Failed to parse config file: "
+                  << configFile << "\033[0m" << std::endl;
+        return (1);
+    }
+    if (config.getParsedServerConfigs().empty())
+    {
+        std::cerr << "\033[1;31m[ERROR] No server blocks found in config.\033[0m" << std::endl;
+        return (1);
+    }
+
+    std::cout << "\033[92m[OK] Config parsed: "
+              << config.getParsedServerConfigs().size()
+              << " server(s) found.\033[0m" << std::endl;
+
+    // ── 3. Crear el servidor y arrancarlo ───────────────────────────────────
+    Server server(config);
+
+    std::cout << "\033[96m[INFO] Starting server... (Ctrl+C to stop)\033[0m" << std::endl;
+
+    if (!server.run())
+    {
+        std::cerr << "\033[1;31m[ERROR] Server exited with error.\033[0m" << std::endl;
+        return (1);
+    }
+
+    std::cout << "\033[92m[INFO] Server stopped cleanly.\033[0m" << std::endl;
+    return (0);
+}
+/*
 int main()
 {
     // 1. Crear un vector de configuracions de Location
@@ -46,3 +132,4 @@ int main()
 
     return 0;
 }
+*/
