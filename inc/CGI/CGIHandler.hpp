@@ -31,6 +31,10 @@
 #include "../inc/utils/Utils.hpp"
 #include "../inc/response/ResponseBuilder.hpp"
 
+// Arriba en CGIHandler.hpp, antes de la clase:
+//class HTTPResponse;
+//class HTTPRequest;
+
 class CGIHandler
 {
     private:

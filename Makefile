@@ -42,8 +42,8 @@ UTILS_FILES =   Utils.cpp \
 
 MAIN_FILE   = main.cpp
 
-# $(addprefix $(CGI_DIR), $(CGI_FILES)) 
-SOURCE_FILES =  $(addprefix $(MIME_DIR), $(MIME_FILES)) \
+SOURCE_FILES =  $(addprefix $(CGI_DIR), $(CGI_FILES)) \
+                $(addprefix $(MIME_DIR), $(MIME_FILES)) \
                 $(addprefix $(PARSER_DIR), $(PARSER_FILES)) \
                 $(addprefix $(REQUEST_DIR), $(REQUEST_FILES)) \
                 $(addprefix $(RESPONSE_DIR), $(RESPONSE_FILES)) \

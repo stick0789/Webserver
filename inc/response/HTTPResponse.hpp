@@ -22,6 +22,9 @@
 #include <ctime>
 #include <iostream>
 
+//Forward declaration para romper el ciclo de dependencia circular
+//class ResponseBuilder;
+
 class HTTPResponse
 {
         public:

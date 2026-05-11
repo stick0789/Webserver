@@ -85,6 +85,7 @@ bool HTTPRequest::getIsComplete() const
 
 const std::string &HTTPRequest::getHeader(std::string name) const
 {
+	/*
 	for (size_t i = 0; i < name.size();i++)
 	{
 		name[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(name[i])));
@@ -92,7 +93,18 @@ const std::string &HTTPRequest::getHeader(std::string name) const
 	std::map<std::string, std::string>::const_iterator it = _headers.find(name);
 	if (it != _headers.end())
 		return it->second;
-	return "";
+	return "";*/
+	for (size_t i = 0; i < name.size(); i++)
+	{
+		name[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(name[i])));
+	}
+	std::map<std::string, std::string>::const_iterator it = _headers.find(name);
+	if (it != _headers.end())
+		return it->second;
+	
+	// Solución al temporal: creamos un string vacío estático que viva en memoria
+	static const std::string empty = "";
+	return empty;
 }
 
 // Setters
@@ -121,7 +133,8 @@ void HTTPRequest::setHttpVersion(const std::string& version)
 	this->_httpVersion = version; 
 }
 
-void HTTPRequest::setBody(std::vector<uint8_t> body) 
+//void HTTPRequest::setBody(std::vector<uint8_t> body) 
+void HTTPRequest::setBody(const std::vector<uint8_t>& body)
 { 
 	this->_body = body; 
 }
@@ -154,11 +167,12 @@ void HTTPRequest::appendBody(const std::string& data)
 // Utils
 bool HTTPRequest::hasHeader(const std::string& name) const
 {
-	std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); it++;
+	/*std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); it++;
 	if (_headers.find(name) != _headers.end())
 		return (true);
 	else
-		return (false);
+		return (false);*/
+	return (_headers.find(name) != _headers.end());
 }
 
 bool HTTPRequest::shouldKeepAlive() const
@@ -175,6 +189,7 @@ bool HTTPRequest::shouldKeepAlive() const
 	}
 	if (connection == "keep-alive")
 		return (true);
+	return (false);
 }
 
 void HTTPRequest::clear()

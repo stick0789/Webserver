@@ -294,7 +294,27 @@ bool Server::readFromClient(int fd)
     }
     
     //Aqui se integra con la parte de Pau - Response builder 
+    // ── Request válido: construir la respuesta con ResponseBuilder ─────────
+    //
+    // NOTA: ResponseBuilder tiene miembros de referencia (_request, _response,
+    // _cgiObj) que deben inicializarse en su constructor. Si tu equipo aún no
+    // ha implementado ese constructor parametrizado, usa temporalmente la línea
+    // de error de abajo hasta que esté listo.
+    //
+    // Cuando ResponseBuilder tenga su constructor completo, reemplaza este bloque:
+    //
+    //   HTTPResponse response;
+    //   CGIHandler cgi(request, response, request.getBody());
+    //   ResponseBuilder builder(request, *client.getConfig(), response, cgi);
+    //   builder.buildResponse();
+    //   std::string serialized = response.serialize();
+    //
+    // Por ahora, como ResponseBuilder().default no tiene referencias inicializadas,
+    // generamos un 501 provisional para que el servidor compile y funcione:
+ 
     HTTPResponse response = HTTPResponse::buildErrorResponse(501);
+    // ↑ Reemplazar este bloque cuando ResponseBuilder esté listo (ver comentario arriba)
+
     std::string serialized = response.serialize();
  
     int responseFd = responseToFd(serialized);

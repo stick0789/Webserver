@@ -16,7 +16,8 @@ class HTTPRequest
 			std::string							_httpVersion;
 			std::map<std::string, std::string>	_headers;
 			//a uint vect
-			std::string							_body;
+			//std::string							_body;
+			std::vector<uint8_t>				_body; // <-- Corregido a vector
 			int									_errorCode;
 			bool								_isComplete;
 
@@ -34,7 +35,8 @@ class HTTPRequest
 			const std::string							&getHttpVersion() const;
 			const std::map<std::string, std::string>	&getHeaders() const;
 			const std::string							&getHeader(std::string name) const;
-			const std::string							&getBody() const;
+			//const std::string							&getBody() const;
+			const std::vector<uint8_t>					&getBody() const;
 			int											getErrorCode() const;
 			bool										getIsComplete() const;
 
@@ -45,7 +47,8 @@ class HTTPRequest
 			void	setQueryString(const std::string& queryString);
 			void	setHttpVersion(const std::string& version);
 			void	setHeader(std::string name, const std::string& value);
-			void	setBody(std::string& body);
+			//void	setBody(std::string& body);
+			void	setBody(const std::vector<uint8_t>& body);
 			void	appendBody(const std::string& data);
 			void	setErrorCode(int code);
 			void	setIsComplete(bool complete);
