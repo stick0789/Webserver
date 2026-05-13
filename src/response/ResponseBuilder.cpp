@@ -6,130 +6,55 @@
 /*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/04 15:14:30 by marvin            #+#    #+#             */
-/*   Updated: 2026/05/09 14:51:37 by pmorello         ###   ########.fr       */
+/*   Updated: 2026/05/13 19:50:29 by pmorello         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../inc/response/ResponseBuilder.hpp"
 
-/* utils ResponseBuilder */
+ResponseBuilder::ResponseBuilder(const HTTPRequest& request, const ServerConfig& serverConf, HTTPResponse& response, CGIHandler& cgi) :
+    _request(request),
+    _serverConf(serverConf),
+    _response(response),
+    _cgi(cgi),
+    _fullPath(""),
+    _cgiFlag(0),
+    _indexFlag(false),
+    _redirectUrl(""),
+    _contentType(""),
+    _contentLength(0)
+{}
 
-static void LocationMatchRequest(const std::string &reqPath, const std::vector<LocationConfig> &locsPath, std::string &urlMatch)
+ResponseBuilder::ResponseBuilder(const ResponseBuilder& src) :
+    _request(src._request),
+    _serverConf(src._serverConf),
+    _response(src._response),
+    _cgi(src._cgi),
+    _fullPath(src._fullPath),
+    _cgiFlag(src._cgiFlag),
+    _indexFlag(src._indexFlag),
+    _redirectUrl(src._redirectUrl),
+    _contentType(src._contentType),
+    _contentLength(src._contentLength)
+{}
+
+ResponseBuilder &ResponseBuilder::operator=(const ResponseBuilder& src)
 {
-    size_t  longestMatch = 0;
-    std::string res = "";
-    std::vector<LocationConfig>::const_iterator it;
-    for (it = locsPath.begin(); it != locsPath.end(); it++)
+    if (this != &src)
     {
-        if (reqPath.compare(0, it->getPath().length(), it->getPath()) == 0)
-        {
-            if (it->getPath() == "/" || reqPath.length() == it->getPath().length() || reqPath[it->getPath().length()] == '/')
-            {
-                if (reqPath.length() > longestMatch)
-                    longestMatch = it->getPath().length();
-                    urlMatch = it->getPath();
-            }
-        }
+        _response = src._response;
+        _cgi = src._cgi;
+        _fullPath = src._fullPath;
+        _cgiFlag = src._cgiFlag;
+        _indexFlag = src._indexFlag;
+        _redirectUrl = src._redirectUrl;
+        _contentType = src._contentType;
+        _contentLength = src._contentLength;
     }
+    return (*this);
 }
 
-static int  validMethods(const std::string &method, const LocationConfig *ptr)
-{
-    const std::vector<std::string> &methods = ptr->getAllowedMethods();
-    if (methods.empty())
-        return (0);
-    std::vector<std::string>::const_iterator it;
-    for (it = methods.begin(); it != methods.end(); it++)
-    {
-        if (*it == method)
-            return (0);
-    }
-    return (1);
-}
-
-static bool isDirectory(const std::string &path)
-{
-    struct stat s;
-    if (stat(path.c_str(), &s) == 0)
-        return (S_ISDIR(s.st_mode));
-    return (false);
-    
-}
-
-static bool fileExist(std::string &path)
-{
-    struct stat s;
-    return (stat(path.c_str(), &s) == 0);
-}
-
-static std::string removeBoundary(const std::string &body, std::string &bdary)
-{
-    std::string buffer;
-    std::string newBody;
-    std::string filename;
-    bool isBoundary = false;
-    bool isContent = false;
-
-    std::string start_delim = "--" + bdary;
-    std::string end_delim = "--" + bdary + "--";
-
-    if (body.find(start_delim) != std::string::npos && body.find(end_delim) != std::string::npos)
-    {
-        for (size_t i = 0; i < body.size(); i++)
-        {
-            buffer.clear();
-            while (i < body.size() && body[i] != '/n')
-            {
-                buffer += body[i];
-                i++;
-            }
-            if (!buffer.compare(0, end_delim.length(), end_delim))
-            {
-                if (isContent && !newBody.empty())
-                    newBody.erase(newBody.end() - 1);
-                break;
-            }
-            if (!buffer.compare(0, start_delim.length(), start_delim))
-            {
-                isBoundary = true;
-                isContent = false;
-                continue;
-            }
-            if (isBoundary)
-            {
-                if (!buffer.compare(0, 31, "Content-Disposition: form-data;"))
-                {
-                    size_t start = buffer.find("filename=/");
-                    if (start != std::string::npos)
-                    {
-                        size_t end = buffer.find("/", start + 10);
-                        if (end != std::string::npos)
-                        {
-                            filename = buffer.substr(start + 10, end - (start + 10));
-                        }
-                    }
-                }
-                else if(!buffer.compare(0, 1, "/r"))
-                {
-                    isBoundary = false;
-                    isContent = true;
-                }
-            }
-            else if (isContent)
-            {
-                newBody += (buffer + "/n");
-            }
-        }
-    }
-    return (newBody);
-}
-
-
-
-HTTPResponse    ResponseBuilder::getResponse() const
-{
-    return (this->_response);
-}
+ResponseBuilder::~ResponseBuilder() {}
 
 int  ResponseBuilder::readFile()
 {
@@ -142,102 +67,27 @@ int  ResponseBuilder::readFile()
     return (0);
 }
 
-/* Extreu el path i fa algunes validacions 1.Mapeig Logic, 2.validacio de Regles, 3.URL a fullPath, 4.Resolucio de recurs */
-int    ResponseBuilder::parsingPath()
+void ResponseBuilder::setHeaders()
 {
-    
-    std::string urlMatch = "";
-    LocationMatchRequest(_request.getPath(), _serverConf->getLocations(), urlMatch);
-    if (urlMatch.empty())
+    MimeTypes mime;
+    if (_contentType == "text/plain" && !_fullPath.empty())
     {
-        _response.setStatusCode(404);
-        return (1);
+        size_t dot_pos = _fullPath.find_last_of(".");
+        if (dot_pos != std::string::npos)
+            _contentType = mime.getMimeType(_fullPath.substr(dot_pos));
     }
-    LocationConfig *confLoc = NULL; //es un punter a on guardarem la configuracio de Location copiada.
-    for (size_t i = 0; i < _serverConf->getLocations().size(); i++)
-    {
-        if (_serverConf->getLocations()[i].getPath() == urlMatch)
-        {
-            _location = _serverConf->getLocations()[i];
-            confLoc = &_location;
-            break ;
-        }
-    }
-    if (!confLoc)
-    {
-        _response.setStatusCode(404);
-        return (1);
-    }
-    if (validMethods(_request.getMethod(), confLoc))
-    {
-        _response.setStatusCode(405);
-        return (1);
-    }
-    if (_request.getBody().size() > _serverConf->getClientMaxBodySize())
-    {
-        _response.setStatusCode(413);
-        return (1);
-    }
-    if (confLoc->getRedirectCode() != 0)
-    {
-        _response.setStatusCode(confLoc->getRedirectCode());
-        _redirectUrl = confLoc->getRedirectUrl();
-        return (1);
-    }
-    if (confLoc->getPath().find("cgi-bin") != std::string::npos || !confLoc->getCgiExtension().empty())
-    {
-        _cgi = 1;
-        return (0);
-    }
-    _fullPath = confLoc->getRoot() + _request.getPath();
-    if (isDirectory(_fullPath))
-    {
-        if (_fullPath[_fullPath.length() - 1] != '/')
-        {
-            _response.setStatusCode(301);
-            _redirectUrl = _request.getPath() + "/";
-            return (1);
-        }
-        const std::vector<std::string>& indexFiles = confLoc->getIndexFiles();
-        for (size_t i = 0; i < indexFiles.size(); i++)
-        {
-            std::string indexPath = _fullPath + indexFiles[i];
-            if (fileExist(indexPath))
-            {
-                _fullPath = indexPath;
-                return (0);
-            }
-        }
-        if (confLoc->getAutoindex())
-        {
-            _autoindex = true;
-            return (0);
-        }
-        _response.setStatusCode(403);
-        return (1);
-    }
-    if (!fileExist(_fullPath))
-    {
-        _response.setStatusCode(404);
-        return (1);
-    }
-    return (0);
+    _response.setHeader("Content-Type", _contentType);
+    std::stringstream ss;
+    ss << _response.getBody().size();
+    _response.setHeader("Content-Length", ss.str());
+    if (_request.getHeader("connection") == "keep-alive")
+        _response.setHeader("Connection", "keep-alive");
+    else
+        _response.setHeader("Connection", "close");
+    if (_response.getStatusCode() >= 300 && _response.getStatusCode() < 400 && !_redirectUrl.empty())
+        _response.setHeader("Location", _redirectUrl);
 }
 
-/* Monta la pagina en cas de que surti algun error */
-void    ResponseBuilder::buildErrorBody()
-{
-    int code = _response.getStatusCode();
-    if (_serverConf && _serverConf->getErrorPages().count(code))
-    {
-        _fullPath = _location.getRoot() + _serverConf->getErrorPages().at(code);
-        if (readFile())
-            return ;
-    }
-    _response = HTTPResponse::buildErrorResponse(code);
-}
-
-/* Monta la pagina en cas de que no hi hagui fitxer dins */
 int ResponseBuilder::buildHtmlIndex()
 {
     DIR *directory = opendir(_fullPath.c_str());
@@ -263,50 +113,102 @@ int ResponseBuilder::buildHtmlIndex()
     return (0);
 }
 
-void    ResponseBuilder::setContentType()
+void    ResponseBuilder::buildErrorBody()
 {
-    if (_contentType == "text/plain" && !_fullPath.empty())
+    int code = _response.getStatusCode();
+    if (_serverConf.getErrorPages().count(code))
     {
-        size_t dot_pos = _fullPath.find_last_of(".");
-        if (dot_pos != std::string::npos)
-            _contentType = _mime.getMimeType(_fullPath.substr(dot_pos));
+        _fullPath = _location->getRoot() + _serverConf.getErrorPages().at(code);
+        if (readFile())
+            return ;
     }
-    _response.setHeader("Content-Type", _contentType);
+    _response = HTTPResponse::buildErrorResponse(code);
 }
 
-void    ResponseBuilder::setContentLength()
+int    ResponseBuilder::parsingPath()
 {
-    std::stringstream ss;
-    ss << _response.getBody().size();
-    _response.setHeader("Content-Length", ss.str());
+    
+    std::string urlMatch = "";
+    LocationMatchRequest(_request.getPath(), _serverConf.getLocations(), urlMatch);
+    if (urlMatch.empty())
+    {
+        _response.setStatusCode(404);
+        return (1);
+    }
+    const LocationConfig *confLoc = NULL;
+    const std::vector<LocationConfig>& locations = _serverConf.getLocations();
+    std::vector<LocationConfig>::const_iterator it;
+    for (it = locations.begin(); it != locations.end(); it++)
+    {
+        size_t i = 0;
+        if (urlMatch == it->getPath())
+        {
+            _location = &(*it);
+            confLoc = _location;
+            break ;
+        }
+        
+    }
+    if (!confLoc)
+    {
+        _response.setStatusCode(404);
+        return (1);
+    }
+    if (validMethods(_request.getMethod(), confLoc))
+    {
+        _response.setStatusCode(405);
+        return (1);
+    }
+    if (confLoc->getRedirectCode() != 0)
+    {
+        _response.setStatusCode(confLoc->getRedirectCode());
+        _redirectUrl = confLoc->getRedirectUrl();
+        return (1);
+    }
+    _fullPath = confLoc->getRoot() + _request.getPath();
+    if (confLoc->getPath().find("cgi-bin") != std::string::npos || !confLoc->getCgiExtension().empty())
+    {
+        _cgiFlag = 1;
+        _cgi.setCgiPath(_fullPath);
+        return (0);
+    }
+    if (isDirectory(_fullPath))
+    {
+        if (_fullPath[_fullPath.length() - 1] != '/')
+        {
+            _response.setStatusCode(301);
+            _redirectUrl = _request.getPath() + "/";
+            return (1);
+        }
+        const std::vector<std::string>& indexFiles = confLoc->getIndexFiles();
+        for (size_t i = 0; i < indexFiles.size(); i++)
+        {
+            std::string indexPath = _fullPath + indexFiles[i];
+            if (fileExist(indexPath))
+            {
+                _fullPath = indexPath;
+                return (0);
+            }
+        }
+        if (confLoc->getAutoindex())
+        {
+            _indexFlag = true;
+            return (0);
+        }
+        _response.setStatusCode(403);
+        return (1);
+    }
+    if (!fileExist(_fullPath))
+    {
+        _response.setStatusCode(404);
+        return (1);
+    }
+    return (0);
 }
 
-void    ResponseBuilder::setConnection()
-{
-    if (_request.getHeader("connection") == "keep-alive")
-        _response.setHeader("Connection", "keep-alive");
-    else
-        _response.setHeader("Connection", "close");
-}
-
-void    ResponseBuilder::setLocation()
-{
-    if (_response.getStatusCode() >= 300 && _response.getStatusCode() < 400 && !_redirectUrl.empty())
-        _response.setHeader("Location", _redirectUrl);
-}
-/* Posa el missatge als headers */
-void ResponseBuilder::setHeaders()
-{
-    setContentType();
-    setContentLength();
-    setConnection();
-    setLocation();
-}
-
-/* Un cop amb el path parsejat, i amb les flags comprovades monta el cos depenen del metodes */
 int ResponseBuilder::buildBody()
 {
-    if (_request.getBody().size() > _serverConf->getClientMaxBodySize())
+    if (_request.getBody().size() > _serverConf.getClientMaxBodySize())
     {
         _response.setStatusCode(413);
         buildErrorBody();
@@ -317,7 +219,7 @@ int ResponseBuilder::buildBody()
         buildErrorBody();
         return (1);
     }
-    if (_cgi == 1 || _autoindex == true)
+    if (_cgiFlag == 1 || _indexFlag == true)
         return (0);
     std::string method = _request.getMethod();
     if (method == "GET")
@@ -339,7 +241,8 @@ int ResponseBuilder::buildBody()
             return (1);
         }
         std::string contentType = _request.getHeader("content-Type");
-        const std::string& rawData = _request.getBody();
+        const std::vector<uint8_t>& bodyData = _request.getBody();
+        std::string rawData(reinterpret_cast<char*>(bodyData, bodyData.size()));
         if (contentType.find("multipart/form-data") != std::string::npos)
         {
             size_t  boundaryPos = contentType.find("boundary=");
@@ -369,14 +272,18 @@ int ResponseBuilder::buildBody()
     return (0);
 }
 
-/* Funcio principal on monta tot */
 void    ResponseBuilder::buildResponse()
 {
     if (buildBody())
         return ;
-    if (_cgi)
-        return ;
-    if (_autoindex)
+    if (_cgiFlag == 1)
+    {
+        _cgi.initEnv(_location);
+        int cgiFD = _cgi.execute();
+        if (cgiFD > 0)
+            parsingCGIResponse(cgiFD);
+    }
+    if (_indexFlag == true)
     {
         if (buildHtmlIndex())
         {
@@ -391,9 +298,17 @@ void    ResponseBuilder::buildResponse()
 }
 
 
-void    ResponseBuilder::parsingCGIResponse()
+int    ResponseBuilder::parsingCGIResponse(int fd)
 {
-    std::string cgiResponse = _cgiObj.getCgiResponse(); 
+    char   buffer[4096];
+    size_t  bytesRead;
+    std::string cgiResponse;
+    while ((bytesRead = read(fd, &buffer, sizeof(buffer))) > 0)
+    {
+        if (bytesRead < 0)
+            return (1);
+        cgiResponse.append(buffer, bytesRead);
+    }
     std::string cgiHead; 
     std::string cgiBody;
     size_t  sep = cgiResponse.find("/r/n/r/n");
@@ -418,6 +333,7 @@ void    ResponseBuilder::parsingCGIResponse()
     if(!cgiHead.empty())
         parseAndSetCgiHeads(cgiHead);
     _response.setBody(cgiBody);
+    return (0);
 }
 
 void    ResponseBuilder::parseAndSetCgiHeads(std::string headPart)
