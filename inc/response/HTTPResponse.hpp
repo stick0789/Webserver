@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Response.hpp                                       :+:      :+:    :+:   */
+/*   HTTPResponse.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 13:18:16 by pmorello          #+#    #+#             */
-/*   Updated: 2026/04/28 10:44:08 by pmorello         ###   ########.fr       */
+/*   Updated: 2026/05/13 22:48:16 by pmorello         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,8 +50,6 @@ class HTTPResponse
 	        static HTTPResponse	buildErrorResponse(int code);
 	        static HTTPResponse	buildErrorResponse(int code, const std::string& customBody);
 	        static HTTPResponse	buildRedirectResponse(int code, const std::string& location);
-
-			ResponseBuilder	_buildRes;
 
         private:
 	        int				        			_statusCode;
