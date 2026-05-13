@@ -11,6 +11,13 @@
 /* ************************************************************************** */
 
 #include "../inc/CGI/CGIHandler.hpp"
+#include <iostream>
+#include <unistd.h>    
+#include <sys/wait.h> 
+#include <signal.h>
+#include <string>
+#include <stdio.h>
+#include <stdlib.h>
 
 CGIHandler::CGIHandler(const HTTPRequest& req, HTTPResponse& res, const std::vector<uint8_t>& body) : 
     _cgiPid(-1), 

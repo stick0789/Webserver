@@ -6,7 +6,7 @@
 /*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/06 09:53:34 by marvin            #+#    #+#             */
-/*   Updated: 2026/05/13 19:50:11 by pmorello         ###   ########.fr       */
+/*   Updated: 2026/05/13 20:08:24 by pmorello         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 #include "../inc/mime/MimeTypes.hpp"
 #include "../inc/utils/BuilderUtils.hpp"
 #include "../inc/CGI/CGIHandler.hpp"
+#include "../inc/server/Client.hpp"
 
 class ResponseBuilder
 {
@@ -41,7 +42,7 @@ class ResponseBuilder
             void    buildErrorBody();
             int     parsingPath();
             int     buildBody();            
-            int     readFile();
+            int     readFile(Client &client);
             int     parsingCGIResponse(int fd);
             void    parseAndSetCgiHeads(std::string headPart);
 

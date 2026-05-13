@@ -6,17 +6,26 @@
 /*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/04 15:14:30 by marvin            #+#    #+#             */
-/*   Updated: 2026/05/13 19:50:29 by pmorello         ###   ########.fr       */
+/*   Updated: 2026/05/13 20:30:55 by pmorello         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../inc/response/ResponseBuilder.hpp"
+
+#include <fstream>
+#include <map>
+#include <sstream>
+#include <dirent.h>
+#include <algorithm>
+#include <fcntl.h>
+#include <unistd.h>
 
 ResponseBuilder::ResponseBuilder(const HTTPRequest& request, const ServerConfig& serverConf, HTTPResponse& response, CGIHandler& cgi) :
     _request(request),
     _serverConf(serverConf),
     _response(response),
     _cgi(cgi),
+    _location(NULL),
     _fullPath(""),
     _cgiFlag(0),
     _indexFlag(false),
@@ -30,6 +39,7 @@ ResponseBuilder::ResponseBuilder(const ResponseBuilder& src) :
     _serverConf(src._serverConf),
     _response(src._response),
     _cgi(src._cgi),
+    _location(src._location),
     _fullPath(src._fullPath),
     _cgiFlag(src._cgiFlag),
     _indexFlag(src._indexFlag),
@@ -56,14 +66,15 @@ ResponseBuilder &ResponseBuilder::operator=(const ResponseBuilder& src)
 
 ResponseBuilder::~ResponseBuilder() {}
 
-int  ResponseBuilder::readFile()
+int  ResponseBuilder::readFile(Client &client)
 {
-    std::ifstream file(_fullPath.c_str(), std::ios::binary);
-    if (!file)
+    int fd = open(_fullPath.c_str(), O_RDONLY);
+    if (fd == -1)
+    {
+        _response.setStatusCode(404);
         return (1);
-    std::stringstream ss;
-    ss << file.rdbuf();
-    _response.setBody(ss.str());
+    }
+    client.setResponseFd(fd);
     return (0);
 }
 
@@ -115,11 +126,18 @@ int ResponseBuilder::buildHtmlIndex()
 
 void    ResponseBuilder::buildErrorBody()
 {
+    Client  client;
     int code = _response.getStatusCode();
     if (_serverConf.getErrorPages().count(code))
     {
-        _fullPath = _location->getRoot() + _serverConf.getErrorPages().at(code);
-        if (readFile())
+        if (_location == NULL)
+        {   
+            std::string root = "./www";
+            _fullPath = root + _serverConf.getErrorPages().at(code);
+        }
+        else
+            _fullPath = _location->getRoot() + _serverConf.getErrorPages().at(code);
+        if (readFile(client) == 1)
             return ;
     }
     _response = HTTPResponse::buildErrorResponse(code);
@@ -127,7 +145,6 @@ void    ResponseBuilder::buildErrorBody()
 
 int    ResponseBuilder::parsingPath()
 {
-    
     std::string urlMatch = "";
     LocationMatchRequest(_request.getPath(), _serverConf.getLocations(), urlMatch);
     if (urlMatch.empty())
@@ -224,7 +241,8 @@ int ResponseBuilder::buildBody()
     std::string method = _request.getMethod();
     if (method == "GET")
     {
-        if (readFile()) 
+        Client client;
+        if (readFile(client) == 1) 
         {
             _response.setStatusCode(404);
             buildErrorBody();
@@ -242,7 +260,7 @@ int ResponseBuilder::buildBody()
         }
         std::string contentType = _request.getHeader("content-Type");
         const std::vector<uint8_t>& bodyData = _request.getBody();
-        std::string rawData(reinterpret_cast<char*>(bodyData, bodyData.size()));
+        std::string rawData(reinterpret_cast<char*>(bodyData.data(), bodyData.size()));
         if (contentType.find("multipart/form-data") != std::string::npos)
         {
             size_t  boundaryPos = contentType.find("boundary=");
@@ -297,7 +315,6 @@ void    ResponseBuilder::buildResponse()
     setHeaders();
 }
 
-
 int    ResponseBuilder::parsingCGIResponse(int fd)
 {
     char   buffer[4096];
@@ -311,7 +328,7 @@ int    ResponseBuilder::parsingCGIResponse(int fd)
     }
     std::string cgiHead; 
     std::string cgiBody;
-    size_t  sep = cgiResponse.find("/r/n/r/n");
+    size_t  sep = cgiResponse.find("\r\n\r\n");
     if (sep != std::string::npos)
     {
         cgiHead = cgiResponse.substr(0, sep);
@@ -319,7 +336,7 @@ int    ResponseBuilder::parsingCGIResponse(int fd)
     }
     else
     {
-        sep = cgiResponse.find("/n/n");
+        sep = cgiResponse.find("\n\n");
         if (sep != std::string::npos)
         {
             cgiHead = cgiResponse.substr(0, 2);
