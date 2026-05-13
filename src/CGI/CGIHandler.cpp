@@ -22,13 +22,16 @@
 CGIHandler::CGIHandler(const HTTPRequest& req, HTTPResponse& res, const std::vector<uint8_t>& body) : 
     _cgiPid(-1), 
     _fullPath(""),
+    _body(body),
     _request(req),
     _response(res)
+    
 {}
 
 CGIHandler::CGIHandler(const CGIHandler &src) :
     _cgiPid(src._cgiPid), 
     _fullPath(src._fullPath),
+    _body(src._body),
     _request(src._request),
     _response(src._response)
 {}
@@ -71,7 +74,7 @@ void    CGIHandler::freeMemory()
     }
 }
 
-void    CGIHandler::initEnv(const LocationConfig* location)
+void    CGIHandler::initEnv()
 {
     std::vector<LocationConfig>::const_iterator it_loc;
     int poz = findStart(_cgiPath, "cgi-bin/");
@@ -146,7 +149,7 @@ int CGIHandler::execute()
         {
             
             const std::vector<uint8_t>& bodyData = _request.getBody();
-            std::string body(reinterpret_cast<char*>(bodyData, bodyData.size())); 
+            std::string body(reinterpret_cast<char*>(bodyData.data(), bodyData.size())); 
             if (!body.empty())
                 write(_pipeIn[1], body.c_str(), body.size());
         }

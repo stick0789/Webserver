@@ -6,7 +6,7 @@
 /*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/04 15:14:30 by marvin            #+#    #+#             */
-/*   Updated: 2026/05/13 22:57:09 by pmorello         ###   ########.fr       */
+/*   Updated: 2026/05/13 23:16:39 by pmorello         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -294,7 +294,7 @@ void    ResponseBuilder::buildResponse()
         return ;
     if (_cgiFlag == 1)
     {
-        _cgi.initEnv(_location);
+        _cgi.initEnv();
         int cgiFD = _cgi.execute();
         if (cgiFD > 0)
             parsingCGIResponse(cgiFD);

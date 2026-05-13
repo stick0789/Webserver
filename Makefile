@@ -17,7 +17,7 @@ RESPONSE_DIR  = response/
 SERVER_DIR  = server/
 UTILS_DIR   = utils/
 
-#CGI_FILES   =   CGIHandler.cpp
+CGI_FILES   =   CGIHandler.cpp
 
 MIME_FILES   =  MimeTypes.cpp
 

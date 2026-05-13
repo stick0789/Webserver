@@ -3,28 +3,26 @@
 /*                                                        :::      ::::::::   */
 /*   web_server.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
+/*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/05/07 11:35:08 by marvin            #+#    #+#             */
-/*   Updated: 2026/05/07 11:35:08 by marvin           ###   ########.fr       */
+/*   Created: 2026/05/13 23:17:33 by pmorello          #+#    #+#             */
+/*   Updated: 2026/05/13 23:19:54 by pmorello         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef web_server.hpp
-#define web_server.hpp
+#ifndef WEB_SERVER_HPP
+#define WEB_SERVER_HPP
 
-
-#include "../inc/CGI/CGIHandler.hpp"
-#include "../inc/mime/MimeTypes.hpp"
-#include "../inc/parser/ConfigParser.hpp"
-#include "../inc/parser/RequestParser.hpp"
-#include "../inc/parser/ServerConfig.hpp"
-#include "../inc/parser/ConfigParser.tpp"
 #include "../inc/request/HTTPRequest.hpp"
 #include "../inc/request/LocationConfig.hpp"
-#include "../inc/response/HTTPResponse.hpp"
-#include "../inc/response/ResponseBuilder.hpp"
+#include "../inc/parser/ServerConfig.hpp"
 #include "../inc/server/Server.hpp"
+#include "../inc/response/HTTPResponse.hpp"
+#include "../inc/mime/MimeTypes.hpp"
+#include "../inc/utils/BuilderUtils.hpp"
+#include "../inc/CGI/CGIHandler.hpp"
+#include "../inc/server/Client.hpp"
+#include "../inc/utils/CGIUtils.hpp"
 #include "../inc/utils/Debug.hpp"
 #include "../inc/utils/HTTPStatus.hpp"
 #include "../inc/utils/Utils.hpp"

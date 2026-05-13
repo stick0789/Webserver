@@ -1,10 +1,12 @@
 #ifndef CLIENT_HPP
-# define CLIENT_HPP
+#define CLIENT_HPP
 
 # include <string>
 # include <ctime>
+# include <unistd.h>
+# include <sys/types.h>
 # include "../parser/ServerConfig.hpp"
-#include "../parser/RequestParser.hpp"
+# include "../parser/RequestParser.hpp"
 
 class Client {
     private:
@@ -24,7 +26,7 @@ class Client {
 
         void                updateActivity(void);
         bool                hasTimedOut(int timeoutLimit) const;
-        void                appendRequest(const char *data, size_t size);
+        void                appendRequest(const char *data, ssize_t size);
         
         void                setResponseFd(int fd);
         bool                hasResponse(void) const;

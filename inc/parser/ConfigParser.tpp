@@ -1,3 +1,7 @@
+
+#ifndef CONFIGPARSER_TPP
+#define CONFIGPARSER_TPP
+
 #include <sstream>
 #include <climits>
 #include "../utils/Utils.hpp"
@@ -56,3 +60,5 @@ bool ConfigParser::parseString(Config &config,
         return (false);
     return (true);
 }
+
+#endif

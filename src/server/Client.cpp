@@ -1,6 +1,6 @@
 #include "../../inc/server/Client.hpp"
 #include <iostream>
-#include <unistd.h>
+
 
 Client::Client(void)
     :_fd(-1),
@@ -56,7 +56,7 @@ bool Client::hasTimedOut(int timeoutLimit) const
     return ((time(NULL) - this->_lastActivity) > timeoutLimit);
 }
 
-void Client::appendRequest(const char *data, size_t size)
+void Client::appendRequest(const char *data, ssize_t size)
 {
     this->_requestBuffer.append(data, size);
 }
