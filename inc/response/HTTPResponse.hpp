@@ -6,7 +6,7 @@
 /*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 13:18:16 by pmorello          #+#    #+#             */
-/*   Updated: 2026/05/13 22:48:16 by pmorello         ###   ########.fr       */
+/*   Updated: 2026/05/13 22:51:08 by pmorello         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,6 @@
 #include <map>
 #include "../inc/utils/HTTPStatus.hpp"
 #include "../inc/mime/MimeTypes.hpp"
-#include "../inc/response/ResponseBuilder.hpp"
 #include <sstream>
 #include <ctime>
 #include <iostream>

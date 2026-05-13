@@ -6,7 +6,7 @@
 /*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/06 13:44:52 by marvin            #+#    #+#             */
-/*   Updated: 2026/05/13 20:24:01 by pmorello         ###   ########.fr       */
+/*   Updated: 2026/05/13 22:50:09 by pmorello         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,6 @@
 #define CGIHANDLER_HPP
 
 #include "../inc/request/HTTPRequest.hpp"
-#include "../inc/response/HTTPResponse.hpp"
 #include "../inc/request/LocationConfig.hpp"
 #include "../inc/parser/ServerConfig.hpp"
 #include "../inc/utils/CGIUtils.hpp"
@@ -22,6 +21,8 @@
 #include <string>
 #include <sys/types.h>
 #include <map>
+
+class HTTPResponse;
 
 class CGIHandler
 {

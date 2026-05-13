@@ -14,7 +14,7 @@
 #include <unistd.h> //close for fd
 #include <netdb.h> //getaddrinfo, freeaddrinfo
 #include <sstream> //to turn int to string
-#include <arpa/inet.h>> //for inet_ntoa
+#include <arpa/inet.h> //for inet_ntoa
 
 void printServerInfo(std::string &host, int port, const std::vector<std::string> &names)
 {

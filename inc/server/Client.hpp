@@ -24,7 +24,7 @@ class Client {
 
         void                updateActivity(void);
         bool                hasTimedOut(int timeoutLimit) const;
-        void                appendRequest(const char *data, ssize_t size);
+        void                appendRequest(const char *data, size_t size);
         
         void                setResponseFd(int fd);
         bool                hasResponse(void) const;

@@ -56,7 +56,7 @@ bool Client::hasTimedOut(int timeoutLimit) const
     return ((time(NULL) - this->_lastActivity) > timeoutLimit);
 }
 
-void Client::appendRequest(const char *data, ssize_t size)
+void Client::appendRequest(const char *data, size_t size)
 {
     this->_requestBuffer.append(data, size);
 }
@@ -102,11 +102,9 @@ const ServerConfig *Client::getConfig(void) const
     ssize_t bytesRead = recv(fd, buffer, sizeof(buffer) - 1, 0);
     if (bytesRead < 0)
     {
-        /*
             Since we set the O_NONBLOCK, 
             EWOULDBLOCK / EAGAIN: "No data available right now. Try again later."
             return true because is not a error, just nothing to say.
-        *//*
         if (errno == EAGAIN || errno == EWOULDBLOCK)
             return (true);
         std::cout << "\033[1;31m[ERROR] recv() failed with fd: " << fd << "\033[0m" << std::endl;

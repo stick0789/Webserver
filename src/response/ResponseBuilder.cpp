@@ -6,7 +6,7 @@
 /*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/04 15:14:30 by marvin            #+#    #+#             */
-/*   Updated: 2026/05/13 20:30:55 by pmorello         ###   ########.fr       */
+/*   Updated: 2026/05/13 22:57:09 by pmorello         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,45 +21,45 @@
 #include <unistd.h>
 
 ResponseBuilder::ResponseBuilder(const HTTPRequest& request, const ServerConfig& serverConf, HTTPResponse& response, CGIHandler& cgi) :
-    _request(request),
-    _serverConf(serverConf),
-    _response(response),
-    _cgi(cgi),
-    _location(NULL),
     _fullPath(""),
     _cgiFlag(0),
     _indexFlag(false),
     _redirectUrl(""),
     _contentType(""),
-    _contentLength(0)
+    _contentLength(0),
+    _request(request),
+    _serverConf(serverConf),
+    _response(response),
+    _cgi(cgi),
+     _location(NULL)
 {}
 
 ResponseBuilder::ResponseBuilder(const ResponseBuilder& src) :
-    _request(src._request),
-    _serverConf(src._serverConf),
-    _response(src._response),
-    _cgi(src._cgi),
-    _location(src._location),
     _fullPath(src._fullPath),
     _cgiFlag(src._cgiFlag),
     _indexFlag(src._indexFlag),
     _redirectUrl(src._redirectUrl),
     _contentType(src._contentType),
-    _contentLength(src._contentLength)
+    _contentLength(src._contentLength),
+    _request(src._request),
+    _serverConf(src._serverConf),
+    _response(src._response),
+    _cgi(src._cgi),
+    _location(src._location)
 {}
 
 ResponseBuilder &ResponseBuilder::operator=(const ResponseBuilder& src)
 {
     if (this != &src)
     {
-        _response = src._response;
-        _cgi = src._cgi;
         _fullPath = src._fullPath;
         _cgiFlag = src._cgiFlag;
         _indexFlag = src._indexFlag;
         _redirectUrl = src._redirectUrl;
         _contentType = src._contentType;
         _contentLength = src._contentLength;
+        _response = src._response;
+        _cgi = src._cgi;
     }
     return (*this);
 }
@@ -157,14 +157,12 @@ int    ResponseBuilder::parsingPath()
     std::vector<LocationConfig>::const_iterator it;
     for (it = locations.begin(); it != locations.end(); it++)
     {
-        size_t i = 0;
         if (urlMatch == it->getPath())
         {
             _location = &(*it);
             confLoc = _location;
             break ;
         }
-        
     }
     if (!confLoc)
     {
@@ -360,7 +358,7 @@ void    ResponseBuilder::parseAndSetCgiHeads(std::string headPart)
     std::string line;
     while (std::getline(ss, line))
     {
-       if (!line.empty() && line[line.size() - 1] == '/r')
+       if (!line.empty() && line[line.size() - 1] == '\r')
             line.erase(line.size() - 1);
        if (line.empty())
             continue;
