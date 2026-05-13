@@ -6,7 +6,7 @@
 /*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 19:28:18 by pmorello          #+#    #+#             */
-/*   Updated: 2026/05/13 19:31:06 by pmorello         ###   ########.fr       */
+/*   Updated: 2026/05/13 20:04:04 by pmorello         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,6 @@
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
-
 
 #include "../inc/request/HTTPRequest.hpp"
 #include "../inc/request/LocationConfig.hpp"

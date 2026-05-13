@@ -6,21 +6,12 @@
 /*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/06 13:44:52 by marvin            #+#    #+#             */
-/*   Updated: 2026/05/13 20:02:36 by pmorello         ###   ########.fr       */
+/*   Updated: 2026/05/13 20:03:59 by pmorello         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CGIHANDLER_HPP
 #define CGIHANDLER_HPP
-
-#include <iostream>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <sys/types.h>
-#include <signal.h> 
-#include <string>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "../inc/request/HTTPRequest.hpp"
 #include "../inc/request/LocationConfig.hpp"
