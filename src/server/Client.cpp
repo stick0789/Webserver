@@ -96,6 +96,11 @@ const ServerConfig *Client::getConfig(void) const
     return (this->_config);
 }
 
+RequestParser& Client::getParser()
+{
+    return (this->_parser);
+}
+
 /*
     recicla esto
 
