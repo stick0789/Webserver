@@ -22,6 +22,8 @@
 CGIHandler::CGIHandler(const HTTPRequest& req, HTTPResponse& res, const std::vector<uint8_t>& body) : 
     _cgiPid(-1), 
     _fullPath(""),
+    _chEnv(NULL),
+    _args(NULL),
     _body(body),
     _request(req),
     _response(res)
@@ -31,6 +33,8 @@ CGIHandler::CGIHandler(const HTTPRequest& req, HTTPResponse& res, const std::vec
 CGIHandler::CGIHandler(const CGIHandler &src) :
     _cgiPid(src._cgiPid), 
     _fullPath(src._fullPath),
+    _chEnv(src._chEnv),
+    _args(src._args),
     _body(src._body),
     _request(src._request),
     _response(src._response)
@@ -61,14 +65,14 @@ void    CGIHandler::freeMemory()
     if (_chEnv)
     {
         for (int i = 0; _chEnv[i]; i++)
-            delete[]_chEnv[i];
+            free(_chEnv[i]);
         delete[](_chEnv);
         _chEnv = NULL;
     }
     if (_args)
     {
         for (int i = 0; _args[i]; i++)
-            delete[]_args[i];
+            free(_args[i]);
         delete[](_args);
         _args = NULL;
     }
@@ -101,13 +105,15 @@ void    CGIHandler::initEnv()
     _chEnv = new char*[_env.size() + 1];
 
     std::map<std::string, std::string>::iterator it;
+    size_t i = 0;
     for (it = _env.begin(); it != _env.end(); it++)
     {
-        size_t i = 0;
         std::string fullEnv = it->first + "=" + it->second;
         _chEnv[i] = ft_strdup(fullEnv.c_str());
         i++;
     }
+    _chEnv[i] = NULL;
+
     _args = new char*[3];
     _args[0] = ft_strdup(it_loc->getCgiPass().c_str());
     _args[1] = ft_strdup(_cgiPath.c_str());

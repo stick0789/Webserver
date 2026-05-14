@@ -53,7 +53,7 @@ int main(int argc, char **argv)
     signal(SIGPIPE, SIG_IGN);
 
     // ── 1. Seleccionar el archivo de configuración ──────────────────────────
-    std::string configFile = "conf/Testing.conf";
+    std::string configFile = "Testing.conf";
     if (argc == 2)
         configFile = argv[1];
     else if (argc > 2)
