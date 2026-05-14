@@ -14,7 +14,7 @@
 #define BUILDERUTILS_HPP
 
 #include "../inc/request/HTTPRequest.hpp"
-#include "../inc/request/LocationConfig.hpp"
+#include "../inc/parser/LocationConfig.hpp"
 
 #include <iostream>
 #include <vector>

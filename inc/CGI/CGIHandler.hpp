@@ -14,7 +14,7 @@
 #define CGIHANDLER_HPP
 
 #include "../inc/request/HTTPRequest.hpp"
-#include "../inc/request/LocationConfig.hpp"
+#include "../inc/parser/LocationConfig.hpp"
 #include "../inc/parser/ServerConfig.hpp"
 #include "../inc/utils/CGIUtils.hpp"
 #include "../inc/response/HTTPResponse.hpp"

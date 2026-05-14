@@ -316,7 +316,7 @@ void    ResponseBuilder::buildResponse()
 int    ResponseBuilder::parsingCGIResponse(int fd)
 {
     char   buffer[4096];
-    size_t  bytesRead;
+    ssize_t  bytesRead;
     std::string cgiResponse;
     while ((bytesRead = read(fd, &buffer, sizeof(buffer))) > 0)
     {

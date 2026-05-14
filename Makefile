@@ -26,8 +26,7 @@ PARSER_FILES =  ServerConfig.cpp \
                 LocationConfig.cpp \
                 RequestParser.cpp
 
-REQUEST_FILES   =   HTTPRequest.cpp \
-                    LocationConfig.cpp
+REQUEST_FILES   =   HTTPRequest.cpp
 
 RESPONSE_FILES   =  HTTPResponse.cpp \
                     ResponseBuilder.cpp
@@ -38,7 +37,9 @@ SERVER_FILES =  Server.cpp \
 
 UTILS_FILES =   Utils.cpp \
                 Debug.cpp \
-                HTTPStatus.cpp
+                HTTPStatus.cpp \
+				BuilderUtils.cpp \
+				CGIUtils.cpp
 
 MAIN_FILE   = main.cpp
 

@@ -14,7 +14,7 @@
 #define RESPONSEBUILDER_HPP
 
 #include "../inc/request/HTTPRequest.hpp"
-#include "../inc/request/LocationConfig.hpp"
+#include "../inc/parser/LocationConfig.hpp"
 #include "../inc/parser/ServerConfig.hpp"
 #include "../inc/response/HTTPResponse.hpp"
 #include "../inc/mime/MimeTypes.hpp"
