@@ -1,5 +1,23 @@
 #include "MimeTypes.hpp"
 
+MimeTypes::MimeTypes(){}
+
+MimeTypes::MimeTypes(const MimeTypes& other) 
+{ 
+	*this = other; 
+}
+
+MimeTypes& MimeTypes::operator=(const MimeTypes& other)
+{	
+	if (this != &other)
+	{
+	
+	}
+	return *this; 
+}
+
+MimeTypes::~MimeTypes(){}
+
 std::map<std::string, std::string> MimeTypes::_initMimeMap()
 {
 	std::map<std::string, std::string> m;

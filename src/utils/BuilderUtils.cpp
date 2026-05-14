@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   BuilderUtils.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
+/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 19:01:24 by pmorello          #+#    #+#             */
-/*   Updated: 2026/05/13 19:03:06 by pmorello         ###   ########.fr       */
+/*   Updated: 2026/05/14 15:21:55 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,10 @@ void LocationMatchRequest(const std::string &reqPath, const std::vector<Location
             if (it->getPath() == "/" || reqPath.length() == it->getPath().length() || reqPath[it->getPath().length()] == '/')
             {
                 if (reqPath.length() > longestMatch)
+                {
                     longestMatch = it->getPath().length();
                     urlMatch = it->getPath();
+                }
             }
         }
     }
@@ -76,7 +78,7 @@ std::string removeBoundary(const std::string &body, std::string &bdary)
         for (size_t i = 0; i < body.size(); i++)
         {
             buffer.clear();
-            while (i < body.size() && body[i] != '/n')
+            while (i < body.size() && body[i] != '\n')
             {
                 buffer += body[i];
                 i++;

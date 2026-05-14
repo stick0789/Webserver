@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   web_server.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
+/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 23:17:33 by pmorello          #+#    #+#             */
-/*   Updated: 2026/05/13 23:19:54 by pmorello         ###   ########.fr       */
+/*   Updated: 2026/05/14 15:26:41 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 #define WEB_SERVER_HPP
 
 #include "../inc/request/HTTPRequest.hpp"
-#include "../inc/request/LocationConfig.hpp"
+#include "../inc/parser/LocationConfig.hpp"
 #include "../inc/parser/ServerConfig.hpp"
 #include "../inc/server/Server.hpp"
 #include "../inc/response/HTTPResponse.hpp"

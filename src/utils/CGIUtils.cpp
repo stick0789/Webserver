@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIUtils.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
+/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 19:27:41 by pmorello          #+#    #+#             */
-/*   Updated: 2026/05/13 20:23:02 by pmorello         ###   ########.fr       */
+/*   Updated: 2026/05/14 15:26:03 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,17 +15,17 @@
 template <typename T>
 std::string ToString(const T val)
 {
-    std::string stream;
-    stream << val;
-    return (stream.str());
+    std::stringstream ss;
+    ss << val;
+    return (ss.str());
 }
 
 unsigned int    fromHexToDec(const std::string &nb)
 {
     unsigned int x;
     std::stringstream ss;
-    ss << nb;
-    ss >> std::hex >> x;
+    ss << std::hex << nb;
+    ss >> x;
     return (x);
 }
 
@@ -34,7 +34,7 @@ char*   ft_strdup(const char *str)
     if (!str)
         return (NULL);
     size_t  i = 0;
-    while (str[i] != '/0')
+    while (str[i] != '\0')
         i++;
     char* res = new char[i + 1]; 
     if (!res)
@@ -45,7 +45,7 @@ char*   ft_strdup(const char *str)
         res[i] = str[i];
         i++; 
     }
-    res[i] = '/0';
+    res[i] = '\0';
     return (res);
 }
 

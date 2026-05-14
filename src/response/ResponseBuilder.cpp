@@ -3,14 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   ResponseBuilder.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
+/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/04 15:14:30 by marvin            #+#    #+#             */
-/*   Updated: 2026/05/13 23:16:39 by pmorello         ###   ########.fr       */
+/*   Updated: 2026/05/14 15:27:42 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../inc/response/ResponseBuilder.hpp"
+#include "../inc/server/Client.hpp"
+#include "../inc/mime/MimeTypes.hpp"
 
 #include <fstream>
 #include <map>

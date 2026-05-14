@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ResponseBuilder.hpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
+/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/06 09:53:34 by marvin            #+#    #+#             */
-/*   Updated: 2026/05/13 20:08:24 by pmorello         ###   ########.fr       */
+/*   Updated: 2026/05/14 15:36:13 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,10 +17,10 @@
 #include "../inc/parser/LocationConfig.hpp"
 #include "../inc/parser/ServerConfig.hpp"
 #include "../inc/response/HTTPResponse.hpp"
-#include "../inc/mime/MimeTypes.hpp"
 #include "../inc/utils/BuilderUtils.hpp"
 #include "../inc/CGI/CGIHandler.hpp"
-#include "../inc/server/Client.hpp"
+
+class Client;
 
 class ResponseBuilder
 {
