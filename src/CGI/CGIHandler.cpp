@@ -65,14 +65,20 @@ void    CGIHandler::freeMemory()
     if (_chEnv)
     {
         for (int i = 0; _chEnv[i]; i++)
+        {
             free(_chEnv[i]);
+            _chEnv = NULL;
+        }
         delete[](_chEnv);
         _chEnv = NULL;
     }
     if (_args)
     {
         for (int i = 0; _args[i]; i++)
+        {
             free(_args[i]);
+            _args = NULL;
+        }
         delete[](_args);
         _args = NULL;
     }

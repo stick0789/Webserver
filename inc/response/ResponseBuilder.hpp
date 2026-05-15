@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ResponseBuilder.hpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
+/*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/06 09:53:34 by marvin            #+#    #+#             */
-/*   Updated: 2026/05/14 15:36:13 by marvin           ###   ########.fr       */
+/*   Updated: 2026/05/15 14:37:37 by pmorello         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,9 +39,9 @@ class ResponseBuilder
             const LocationConfig*   _location;
 
             int     buildHtmlIndex();
-            void    buildErrorBody();
+            void    buildErrorBody(Client &client);
             int     parsingPath();
-            int     buildBody();            
+            int     buildBody(Client &client);            
             int     readFile(Client &client);
             int     parsingCGIResponse(int fd);
             void    parseAndSetCgiHeads(std::string headPart);
@@ -52,7 +52,7 @@ class ResponseBuilder
                 ResponseBuilder &operator=(const ResponseBuilder&src);
                 ~ResponseBuilder();
 
-                void    buildResponse();
+                void    buildResponse(Client &client);
                 void    setHeaders();
 };
 

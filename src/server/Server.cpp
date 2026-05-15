@@ -298,7 +298,7 @@ bool Server::readFromClient(int fd)
     HTTPResponse response;
     CGIHandler cgi(request, response, request.getBody());
     ResponseBuilder builder(request, *client.getConfig(), response, cgi);
-    builder.buildResponse();
+    builder.buildResponse(client);
     std::string serialized = response.serialize();
     int responseFd = responseToFd(serialized);
     if (responseFd < 0)

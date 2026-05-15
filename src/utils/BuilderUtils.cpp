@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   BuilderUtils.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
+/*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 19:01:24 by pmorello          #+#    #+#             */
-/*   Updated: 2026/05/14 15:21:55 by marvin           ###   ########.fr       */
+/*   Updated: 2026/05/15 15:05:23 by pmorello         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,18 +15,18 @@
 void LocationMatchRequest(const std::string &reqPath, const std::vector<LocationConfig> &locsPath, std::string &urlMatch)
 {
     size_t  longestMatch = 0;
-    std::string res = "";
     std::vector<LocationConfig>::const_iterator it;
     for (it = locsPath.begin(); it != locsPath.end(); it++)
     {
-        if (reqPath.compare(0, it->getPath().length(), it->getPath()) == 0)
+        std::string locPath = it->getPath();
+        if (reqPath.compare(0, locPath.length(), locPath) == 0)
         {
-            if (it->getPath() == "/" || reqPath.length() == it->getPath().length() || reqPath[it->getPath().length()] == '/')
+            if (locPath == "/" || reqPath.length() == locPath.length() || reqPath[locPath.length()] == '/')
             {
-                if (reqPath.length() > longestMatch)
+                if (locPath.length() >= longestMatch)
                 {
-                    longestMatch = it->getPath().length();
-                    urlMatch = it->getPath();
+                    longestMatch = locPath.length();
+                    urlMatch = locPath;
                 }
             }
         }

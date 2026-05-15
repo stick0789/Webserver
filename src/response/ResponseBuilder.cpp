@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ResponseBuilder.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
+/*   By: pmorello <pmorello@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/04 15:14:30 by marvin            #+#    #+#             */
-/*   Updated: 2026/05/14 15:27:42 by marvin           ###   ########.fr       */
+/*   Updated: 2026/05/15 15:42:08 by pmorello         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,9 +126,8 @@ int ResponseBuilder::buildHtmlIndex()
     return (0);
 }
 
-void    ResponseBuilder::buildErrorBody()
+void    ResponseBuilder::buildErrorBody(Client &client)
 {
-    Client  client;
     int code = _response.getStatusCode();
     if (_serverConf.getErrorPages().count(code))
     {
@@ -154,7 +153,6 @@ int    ResponseBuilder::parsingPath()
         _response.setStatusCode(404);
         return (1);
     }
-    const LocationConfig *confLoc = NULL;
     const std::vector<LocationConfig>& locations = _serverConf.getLocations();
     std::vector<LocationConfig>::const_iterator it;
     for (it = locations.begin(); it != locations.end(); it++)
@@ -162,28 +160,34 @@ int    ResponseBuilder::parsingPath()
         if (urlMatch == it->getPath())
         {
             _location = &(*it);
-            confLoc = _location;
             break ;
         }
     }
-    if (!confLoc)
+    if (!_location)
     {
         _response.setStatusCode(404);
         return (1);
     }
-    if (validMethods(_request.getMethod(), confLoc))
+    if (validMethods(_request.getMethod(), _location))
     {
         _response.setStatusCode(405);
         return (1);
     }
-    if (confLoc->getRedirectCode() != 0)
+    if (_location->getRedirectCode() != 0)
     {
-        _response.setStatusCode(confLoc->getRedirectCode());
-        _redirectUrl = confLoc->getRedirectUrl();
+        _response.setStatusCode(_location->getRedirectCode());
+        _redirectUrl = _location->getRedirectUrl();
         return (1);
     }
-    _fullPath = confLoc->getRoot() + _request.getPath();
-    if (confLoc->getPath().find("cgi-bin") != std::string::npos || !confLoc->getCgiExtension().empty())
+    std::string root = _location->getRoot();
+    std::string path = _request.getPath();
+    if (!root.empty() && root.size() - 1 == '/' && !root.empty() && root[0] != '/')
+        _fullPath = root + path.substr(1);
+    else if (!root.empty() && root.size() - 1 != '/' && !root.empty() && root[0] != '/')
+        _fullPath = root + "/" + path;
+    else
+        _fullPath = root + path;
+    if (_location->getPath().find("cgi-bin") != std::string::npos || !_location->getCgiExtension().empty())
     {
         _cgiFlag = 1;
         _cgi.setCgiPath(_fullPath);
@@ -197,9 +201,11 @@ int    ResponseBuilder::parsingPath()
             _redirectUrl = _request.getPath() + "/";
             return (1);
         }
-        const std::vector<std::string>& indexFiles = confLoc->getIndexFiles();
+        const std::vector<std::string>& indexFiles = _location->getIndexFiles();
         for (size_t i = 0; i < indexFiles.size(); i++)
         {
+            if (_fullPath[_fullPath.length() - 1] == '/')
+                _fullPath.erase(_fullPath.length() - 1, 1);
             std::string indexPath = _fullPath + indexFiles[i];
             if (fileExist(indexPath))
             {
@@ -207,7 +213,7 @@ int    ResponseBuilder::parsingPath()
                 return (0);
             }
         }
-        if (confLoc->getAutoindex())
+        if (_location->getAutoindex())
         {
             _indexFlag = true;
             return (0);
@@ -223,17 +229,17 @@ int    ResponseBuilder::parsingPath()
     return (0);
 }
 
-int ResponseBuilder::buildBody()
+int ResponseBuilder::buildBody(Client &client)
 {
     if (_request.getBody().size() > _serverConf.getClientMaxBodySize())
     {
         _response.setStatusCode(413);
-        buildErrorBody();
+        buildErrorBody(client);
         return (1);
     }
     if (parsingPath())
     {
-        buildErrorBody();
+        buildErrorBody(client);
         return (1);
     }
     if (_cgiFlag == 1 || _indexFlag == true)
@@ -241,11 +247,10 @@ int ResponseBuilder::buildBody()
     std::string method = _request.getMethod();
     if (method == "GET")
     {
-        Client client;
         if (readFile(client) == 1) 
         {
             _response.setStatusCode(404);
-            buildErrorBody();
+            buildErrorBody(client);
             return (1);
         }
     }
@@ -255,7 +260,7 @@ int ResponseBuilder::buildBody()
         if (!file.is_open())
         {
             _response.setStatusCode(500);
-            buildErrorBody();
+            buildErrorBody(client);
             return (1);
         }
         std::string contentType = _request.getHeader("content-Type");
@@ -290,9 +295,9 @@ int ResponseBuilder::buildBody()
     return (0);
 }
 
-void    ResponseBuilder::buildResponse()
+void    ResponseBuilder::buildResponse(Client& client)
 {
-    if (buildBody())
+    if (buildBody(client))
         return ;
     if (_cgiFlag == 1)
     {
@@ -306,11 +311,28 @@ void    ResponseBuilder::buildResponse()
         if (buildHtmlIndex())
         {
             _response.setStatusCode(500);
-            buildErrorBody();
+            buildErrorBody(client);
             return ;
         }
         else
             _response.setStatusCode(200);
+    }
+    else if (_indexFlag == false)
+    {
+        std::ifstream file(_fullPath.c_str());
+        if (!file.is_open())
+        {
+            _response.setStatusCode(404);
+            buildErrorBody(client);
+        }
+        else
+        {
+            std::stringstream ss;
+            ss << file.rdbuf();
+            _response.setBody(ss.str());
+            _response.setHeader("Content-Type", "text/html");
+            file.close();
+        }
     }
     setHeaders();
 }
