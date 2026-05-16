@@ -93,7 +93,9 @@ std::string HTTPResponse::serialize() const
 	oss << "\r\n";
 	if (!_body.empty())
 		oss << _body;
-	std::cout << oss.str() << std::endl;
+	#ifdef DEBUG
+		std::cout << oss.str() << std::endl;
+	#endif
 	return (oss.str());
 }
 

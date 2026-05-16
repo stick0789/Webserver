@@ -151,6 +151,7 @@ bool Server::setupSockets(void)
             pfd.revents = 0;
             this->_fds.push_back(pfd);
             this->_listenFds.push_back(listenFd);
+            this->_listenFdToServerIndex[listenFd] = i;
 
             openedHosts.push_back(host);
             openedPorts.push_back(port);
@@ -173,6 +174,8 @@ bool Server::acceptNewConnection(int fd)
 
     if (clientFd < 0)
     {
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+            return (true);
         std::cout << "\033[1;31m[ERROR]  accept() failed. \033[0m" << std::endl;
         return (false);
     }
@@ -182,13 +185,11 @@ bool Server::acceptNewConnection(int fd)
         close(clientFd);
         return (false);
     }
-    for (size_t i = 0; i < this->_listenFds.size(); i++)
+    std::map<int, size_t>::const_iterator cfgIt = this->_listenFdToServerIndex.find(fd);
+    if (cfgIt != this->_listenFdToServerIndex.end() &&
+        cfgIt->second < this->_allServers.size())
     {
-        if (this->_listenFds[i] == fd)
-        {
-            config = &this->_allServers[i];
-            break;
-        }
+        config = &this->_allServers[cfgIt->second];
     }
     if (config)
         this->_clients[clientFd] = Client(clientFd, config);
@@ -248,10 +249,7 @@ bool Server::readFromClient(int fd)
     }
 
     if (bytesRead == 0)
-    {
-        std::cout << "\033[93m[INFO] Connection closed with fd: " << fd << "\033[0m" << std::endl;
         return (false);
-    }
     
     buffer[bytesRead] = '\0';
     //client.appendRequest(buffer, bytesRead);
@@ -388,7 +386,7 @@ std::string Server::getRawRequest(int client_fd) const
     return ("");
 }
 
-void Server::kickClient(int fd)
+void Server::kickClient(int fd, const std::string &reason)
 {
     std::map<int, Client>::iterator it = this->_clients.find(fd);
     if (it != this->_clients.end())
@@ -406,8 +404,11 @@ void Server::kickClient(int fd)
         }
     }
     this->_clients.erase(fd);
+    std::cout << "\033[93m[INFO] Client fd '" << fd
+              << "' disconnected (" << reason << ")\033[0m" << std::endl;
+
     #ifdef DEBUG
-        std::cout << "[DEBUG] client with fd '" << fd << "' was kicked." << std::endl;
+        std::cout << "[DEBUG] Remaining clients: " << this->_clients.size() << std::endl;
     #endif
 }
 
@@ -426,12 +427,13 @@ void Server::setClientEvents(int fd, short events)
 void Server::checkTimeouts(void)
 {
     for (std::map<int, Client>::iterator it = this->_clients.begin();
-        it != this->_clients.end();)
+         it != this->_clients.end();)
     {
-        if(it->second.hasTimedOut(IDLE_TIMEOUT / 1000))
+        if (it->second.hasTimedOut(IDLE_TIMEOUT / 1000))
         {
-            kickClient(it->first);
-            this->_clients.erase(it++);
+            int fd = it->first;
+            ++it;              
+            kickClient(fd, "Timeout");
         }
         else
             ++it;
@@ -446,6 +448,7 @@ void Server::cleanup(void)
             close(this->_fds[i].fd);
     }
     this->_fds.clear();
+    this->_listenFdToServerIndex.clear();
     #ifdef DEBUG
         std::cout << "\033[31mAll resources cleaned!\033[0m" << std::endl;
     #endif
@@ -544,13 +547,13 @@ bool Server::run(void)
                 if (_fds[i].revents & (POLLERR | POLLHUP | POLLNVAL))
             # endif
             {
-                kickClient(fd);
+                kickClient(fd, "poll_error_or_hangup");
                 continue;
             }
             if (_fds[i].revents & POLLIN)
             {
                 if (!readFromClient(fd))
-                    kickClient(fd);
+                    kickClient(fd, "read_error_or_peer_closed");
                 else
                     this->_clients[fd].updateActivity();
             }
@@ -558,7 +561,7 @@ bool Server::run(void)
             {
                 if (!sendToClient(fd))
                 {
-                    kickClient(fd);
+                    kickClient(fd, "send_error");
                     continue;
                 }
                 else

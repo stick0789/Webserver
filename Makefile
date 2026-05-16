@@ -24,7 +24,8 @@ MIME_FILES   =  MimeTypes.cpp
 PARSER_FILES =  ServerConfig.cpp \
                 ConfigParser.cpp \
                 LocationConfig.cpp \
-                RequestParser.cpp
+                RequestParser.cpp \
+				ConfigPreflight.cpp
 
 REQUEST_FILES   =   HTTPRequest.cpp
 

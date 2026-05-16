@@ -46,7 +46,12 @@ bool ConfigParser::parseConfigFile(const std::string &configFile)
 {
     try
     {
-        std::string fullPath = "conf/" + configFile;
+        std::string fullPath;
+        if (configFile.find("/") != std::string::npos)
+            fullPath = configFile;
+        else
+            fullPath = "conf/" + configFile;
+
         std::ifstream file(fullPath.c_str());
 
         if (!file.is_open())
