@@ -17,6 +17,9 @@
 #include <sstream> //to turn int to string
 #include <arpa/inet.h> //for inet_ntoa
 
+// Reference to global run flag from main.cpp
+extern volatile bool g_running;
+
 void printServerInfo(std::string &host, int port, const std::vector<std::string> &names)
 {
 
@@ -543,7 +546,7 @@ bool Server::run(void)
         return (false);
 
     bool activeServer = true;
-    while (activeServer)
+    while (activeServer && g_running)
     {
         checkTimeouts();
         int pollRes = poll(&this->_fds[0], this->_fds.size(), POLL_TIMEOUT);
