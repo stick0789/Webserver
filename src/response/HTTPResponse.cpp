@@ -155,6 +155,9 @@ std::string HTTPResponse::_generateErrorPage(int code, const std::string& messag
 		<< "<body>\r\n"
 		<< "<center><h1>" << code << " " << message << "</h1></center>\r\n"
 		<< "<hr><center>webserv/1.0</center>\r\n"
+		<< "<hr><center>Pmorello</center>\r\n"
+		<< "<hr><center>Rmanzana</center>\r\n"
+		<< "<hr><center>Jaacosta</center>\r\n"
 		<< "</body>\r\n"
 		<< "</html>\r\n";
 	return oss.str();
