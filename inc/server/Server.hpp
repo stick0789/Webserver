@@ -26,6 +26,7 @@ class Server {
         std::vector<struct pollfd>  _fds;
         std::vector<int>            _listenFds;
         std::map<int, Client>       _clients;
+        std::map<int, size_t>       _listenFdToServerIndex;
 
         bool setupSockets(void);           // socket(), bind(), listen()
         bool acceptNewConnection(int fd);    // accept()
@@ -35,7 +36,7 @@ class Server {
         
         std::string  getRawRequest(int client_fd) const; //Returns the content of _clientBuffers[client_fd]
 
-        void kickClient(int fd);
+        void kickClient(int fd, const std::string &reason);
         void setClientEvents(int fd, short events);
         void checkTimeouts(void);
         void cleanup(void);

@@ -84,9 +84,10 @@ void    CGIHandler::freeMemory()
     }
 }
 
-void    CGIHandler::initEnv()
+//void    CGIHandler::initEnv()
+void    CGIHandler::initEnv(const LocationConfig& loc)
 {
-    std::vector<LocationConfig>::const_iterator it_loc;
+    //std::vector<LocationConfig>::const_iterator it_loc;
     int poz = findStart(_cgiPath, "cgi-bin/");
     _env["AUTH_TYPE"] = "Basic";
 	_env["CONTENT_LENGTH"] = _request.getHeader("content-length");
@@ -94,8 +95,10 @@ void    CGIHandler::initEnv()
     _env["GATEWAY_INTERFACE"] = "CGI/1.1";
 	_env["SCRIPT_NAME"] = _cgiPath;
     _env["SCRIPT_FILENAME"] = ((poz < 0 || (size_t)(poz + 8) > _cgiPath.size()) ? "" : _cgiPath.substr(poz + 8, _cgiPath.size())); // check dif cases after put right parametr from the response
-    _env["PATH_INFO"] = getPathInfo(_request.getPath(), it_loc->getCgiExtension());
-    _env["PATH_TRANSLATED"] = it_loc->getRoot() + (this->_env["PATH_INFO"] == "" ? "/" : this->_env["PATH_INFO"]);
+    //_env["PATH_INFO"] = getPathInfo(_request.getPath(), it_loc->getCgiExtension());
+    _env["PATH_INFO"] = getPathInfo(_request.getPath(), loc.getCgiExtension());
+    //_env["PATH_TRANSLATED"] = it_loc->getRoot() + (this->_env["PATH_INFO"] == "" ? "/" : this->_env["PATH_INFO"]);
+    _env["PATH_TRANSLATED"] = loc.getRoot() + (this->_env["PATH_INFO"] == "" ? "/" : this->_env["PATH_INFO"]);
     _env["QUERY_STRING"] = decode(_request.getQueryString());
     _env["REMOTE_ADDR"] = _request.getHeader("host");
 	poz = findStart(_request.getHeader("host"), ":");
@@ -103,7 +106,8 @@ void    CGIHandler::initEnv()
     _env["SERVER_PORT"] = (poz > 0 ? _request.getHeader("host").substr(poz + 1, _request.getHeader("host").size()) : "");
     _env["REQUEST_METHOD"] = _request.getMethod();
     _env["HTTP_COOKIE"] = _request.getHeader("cookie");
-    _env["DOCUMENT_ROOT"] = it_loc->getRoot();
+    //_env["DOCUMENT_ROOT"] = it_loc->getRoot();
+    _env["DOCUMENT_ROOT"] = loc.getRoot();
 	_env["REQUEST_URI"] = _request.getPath() + _request.getQueryString();
     _env["SERVER_PROTOCOL"] = "HTTP/1.1";
     _env["REDIRECT_STATUS"] = "200";
@@ -121,7 +125,8 @@ void    CGIHandler::initEnv()
     _chEnv[i] = NULL;
 
     _args = new char*[3];
-    _args[0] = ft_strdup(it_loc->getCgiPass().c_str());
+    //_args[0] = ft_strdup(it_loc->getCgiPass().c_str());
+    _args[0] = ft_strdup(loc.getCgiPass().c_str());
     _args[1] = ft_strdup(_cgiPath.c_str());
     _args[2] = NULL;
 }
@@ -161,7 +166,7 @@ int CGIHandler::execute()
         {
             
             const std::vector<uint8_t>& bodyData = _request.getBody();
-            std::string body(reinterpret_cast<char*>(bodyData.data(), bodyData.size())); 
+            std::string body(reinterpret_cast<const char*>(bodyData.data()), bodyData.size()); 
             if (!body.empty())
                 write(_pipeIn[1], body.c_str(), body.size());
         }

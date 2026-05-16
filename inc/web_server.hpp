@@ -16,6 +16,7 @@
 #include "../inc/request/HTTPRequest.hpp"
 #include "../inc/parser/LocationConfig.hpp"
 #include "../inc/parser/ServerConfig.hpp"
+#include "../inc/parser/ConfigPreflight.hpp"
 #include "../inc/server/Server.hpp"
 #include "../inc/response/HTTPResponse.hpp"
 #include "../inc/mime/MimeTypes.hpp"

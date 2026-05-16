@@ -50,7 +50,8 @@ class CGIHandler
             ~CGIHandler();
 
             int    execute();
-            void   initEnv();
+            //void   initEnv();
+            void initEnv(const LocationConfig& loc);
         
             void        setCgiPath(const std::string& path);
 };

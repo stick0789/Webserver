@@ -26,6 +26,78 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "web_server.hpp"   // Global project include 
+
+#include <iostream>
+#include <csignal>
+
+// Variable global para controlar el cierre limpio y evitar leaks en Valgrind
+// (Asegúrate de que webserv.run() use un bucle tipo 'while(g_running)')
+volatile bool g_running = true; 
+
+void goodByeHandler(int sig)
+{
+    (void)sig;
+    g_running = false;
+    std::cout << std::endl << "\033[1;32m[webserv] Server stopped. Goodbye!\033[0m" << std::endl;
+}
+
+int main(int argc, char *argv[])
+{
+    // Signals 
+    signal(SIGINT, goodByeHandler);
+    signal(SIGTERM, goodByeHandler);
+    signal(SIGPIPE, SIG_IGN); // Prevents crashes
+
+    if(argc > 2)
+    {
+        std::cout << "⚠️Wrong usage!⚠️" << std::endl;
+        std::cout << "executable should be executed as follows:" << std::endl;
+        std::cout << "./webserv [configuration file]" << std::endl;
+        return (1);
+    }
+
+    ConfigParser configs;
+    bool success = false;
+
+    // Config parse
+    if(argc == 2)
+        success = configs.parseConfigFile(argv[1]);
+    else
+        success = configs.parseConfigFile();
+
+    // Security check
+    if (success && configs.getParsedServerConfigs().empty())
+    {
+        std::cerr << "\033[1;31m[ERROR] No server blocks found in config.\033[0m" << std::endl;
+        success = false;
+    }
+
+    #ifdef DEBUG
+        if (success) {
+            printParsedConfig(configs);
+        }
+    #endif
+
+    if (success)
+    {   //before running, I check if all configured files and folders actually exists
+        if (!runConfigPreflight(configs.getParsedServerConfigs()))
+        {
+            std::cerr << "[ERROR] Preflight failed. Check config paths/permissions." << std::endl;
+            return (1);
+        }
+        Server webserv(configs);
+        success = webserv.run();
+    }
+
+    /*
+        !success because true = 1, false = 0
+        but return expects 0 for no error, anything else for error
+    */
+    return (!success);
+}
+
+/*
 #include "web_server.hpp"   // Include global del proyecto
 
 #include <iostream>
@@ -96,7 +168,7 @@ int main(int argc, char **argv)
 
     std::cout << "\033[92m[INFO] Server stopped cleanly.\033[0m" << std::endl;
     return (0);
-}
+}*/
 /*
 int main()
 {
