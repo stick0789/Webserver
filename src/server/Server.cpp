@@ -50,9 +50,9 @@ static int responseToFd(const std::string &responseStr)
         return (-1);
     }
  
-    // Escribir toda la respuesta en el extremo de escritura y cerrarlo
-    // Para respuestas grandes esto bloquearía si el pipe se llena,
-    // pero en webserv de 42 las respuestas caben en el buffer del kernel (64KB típico).
+    // Write the whole response to the write end and close it.
+    // For very large responses this would block if the pipe fills,
+    //  but for this project responses fit in the kernel pipe buffer (normally 64KB).
     ssize_t written = write(pipeFds[1], responseStr.c_str(), responseStr.size());
     close(pipeFds[1]);
  
@@ -134,7 +134,7 @@ bool Server::setupSockets(void)
             if (bind(listenFd, res->ai_addr, res->ai_addrlen) < 0)
             {
                 std::cout << "\033[1;31m[ERROR] Port " << port << " on host '" << host
-                << "' is already in use or cannot be bound.\n\tMake sure no other server is running on this port and que la IP existe.\033[0m" << std::endl;
+                << "' is already in use or cannot be bound.\n\tMake sure no other server is running on this port and the IP exists.\033[0m" << std::endl;
                 freeaddrinfo(res);
                 close(listenFd);
                 return (false);
@@ -344,7 +344,7 @@ bool Server::readFromClient(int fd)
     client.setResponseFd(responseFd);
     setClientEvents(fd, POLLOUT);
  
-    // ── Keep-alive: resetear el parser para el siguiente request ───────────
+    // ── Keep-alive: reset the parser for the next request ───────────
     if (request.shouldKeepAlive())
         client.getParser().reset();
 

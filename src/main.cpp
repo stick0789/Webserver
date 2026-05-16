@@ -15,8 +15,7 @@
 #include <iostream>
 #include <csignal>
 
-// Variable global para controlar el cierre limpio y evitar leaks en Valgrind
-// (Asegúrate de que webserv.run() use un bucle tipo 'while(g_running)')
+// Global variable to control clean shutdown and avoid leaks under Valgrind
 volatile bool g_running = true; 
 
 void goodByeHandler(int sig)
