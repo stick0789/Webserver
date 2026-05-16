@@ -6,14 +6,16 @@ Client::Client(void)
     :_fd(-1),
     _lastActivity(time(NULL)),
     _responseFd(-1),
-    _config(NULL)
+    _config(NULL),
+    _listenFd(-1)
 {}
 
 Client::Client(int fd, const ServerConfig *config)
     :_fd(fd),
     _lastActivity(time(NULL)),
     _responseFd(-1),
-    _config(config)
+    _config(config),
+    _listenFd(-1)
 {
     if (config)
         _parser.setMaxBodySize(config->getClientMaxBodySize());
@@ -24,7 +26,10 @@ Client::Client(const Client &other)
     _lastActivity(other._lastActivity),
     _requestBuffer(other._requestBuffer),
     _responseFd(other._responseFd),
-    _config(other._config)
+    _config(other._config),
+    _listenFd(other._listenFd),
+    _parser(other._parser)
+
 {}
 
 Client &Client::operator=(const Client &other)
@@ -36,6 +41,8 @@ Client &Client::operator=(const Client &other)
         this->_requestBuffer = other._requestBuffer;
         this->_responseFd = other._responseFd;
         this->_config = other._config;
+        this->_parser = other._parser;
+        this->_listenFd = other._listenFd;
     }
     return (*this);
 }
@@ -101,37 +108,19 @@ RequestParser& Client::getParser()
     return (this->_parser);
 }
 
-/*
-    recicla esto
+void Client::setListenFd(int fd)
+{
+    this->_listenFd = fd;
+}
 
-    ssize_t bytesRead = recv(fd, buffer, sizeof(buffer) - 1, 0);
-    if (bytesRead < 0)
-    {
-            Since we set the O_NONBLOCK, 
-            EWOULDBLOCK / EAGAIN: "No data available right now. Try again later."
-            return true because is not a error, just nothing to say.
-        if (errno == EAGAIN || errno == EWOULDBLOCK)
-            return (true);
-        std::cout << "\033[1;31m[ERROR] recv() failed with fd: " << fd << "\033[0m" << std::endl;
-        return (false);
-    }
-    else if (bytesRead == 0)
-    {
-        std::cout << "\033[93m[INFO] Conection closed with fd: " << fd << ")\033[0m" << std::endl;
-        return false;
-    }
-    size_t currentSize = this->_clientBuffers[fd].size();
-    size_t maxBody = it->second->getClientMaxBodySize();
-    if (currentSize + bytesRead > maxBody)
-    {
-        std::cout << "\033[1;31m[ERROR] Request bigger than client_max_body_size ("
-                    << maxBody << " bytes) with fd: " << fd << "\033[0m" << std::endl; 
-        // error 413 here?
-        return (false);
-    }
-    buffer[bytesRead] = '\0';
-    this->_clientBuffers[fd].append(buffer, bytesRead);
-    #ifdef DEBUG
-        std::cout << "[DEBUG] Receibed" << bytesRead << "bytes from fd " << fd << std:endl;
-    #endif
-*/
+int Client::getListenFd(void) const
+{
+    return this->_listenFd;
+}
+
+void Client::setConfig(const ServerConfig *config)
+{
+    this->_config = config;
+    if (config)
+        this->_parser.setMaxBodySize(config->getClientMaxBodySize());
+}

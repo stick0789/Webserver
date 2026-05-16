@@ -31,10 +31,10 @@ CGIHandler::CGIHandler(const HTTPRequest& req, HTTPResponse& res, const std::vec
 {}
 
 CGIHandler::CGIHandler(const CGIHandler &src) :
-    _cgiPid(src._cgiPid), 
+    _cgiPid(src._cgiPid),
     _fullPath(src._fullPath),
-    _chEnv(src._chEnv),
-    _args(src._args),
+    _chEnv(NULL),
+    _args(NULL),
     _body(src._body),
     _request(src._request),
     _response(src._response)
@@ -44,8 +44,13 @@ CGIHandler  &CGIHandler::operator=(const CGIHandler &src)
 {
     if (this != &src)
     {
-        _cgiPid = src._cgiPid; 
+        freeMemory();
+        _cgiPid = src._cgiPid;
         _fullPath = src._fullPath;
+        _cgiPath = src._cgiPath;
+        _env = src._env;
+        _chEnv = NULL;
+        _args = NULL;
     }
     return (*this);
 }
@@ -65,20 +70,14 @@ void    CGIHandler::freeMemory()
     if (_chEnv)
     {
         for (int i = 0; _chEnv[i]; i++)
-        {
             free(_chEnv[i]);
-            _chEnv = NULL;
-        }
-        delete[](_chEnv);
+        delete[]_chEnv;
         _chEnv = NULL;
     }
     if (_args)
     {
         for (int i = 0; _args[i]; i++)
-        {
             free(_args[i]);
-            _args = NULL;
-        }
         delete[](_args);
         _args = NULL;
     }
@@ -88,13 +87,15 @@ void    CGIHandler::freeMemory()
 void    CGIHandler::initEnv(const LocationConfig& loc)
 {
     //std::vector<LocationConfig>::const_iterator it_loc;
-    int poz = findStart(_cgiPath, "cgi-bin/");
+    //int poz = findStart(_cgiPath, "cgi-bin/");
+    int poz = 0;
     _env["AUTH_TYPE"] = "Basic";
 	_env["CONTENT_LENGTH"] = _request.getHeader("content-length");
 	_env["CONTENT_TYPE"] = _request.getHeader("content-type");
     _env["GATEWAY_INTERFACE"] = "CGI/1.1";
 	_env["SCRIPT_NAME"] = _cgiPath;
-    _env["SCRIPT_FILENAME"] = ((poz < 0 || (size_t)(poz + 8) > _cgiPath.size()) ? "" : _cgiPath.substr(poz + 8, _cgiPath.size())); // check dif cases after put right parametr from the response
+    _env["SCRIPT_FILENAME"] = _cgiPath;
+    //_env["SCRIPT_FILENAME"] = ((poz < 0 || (size_t)(poz + 8) > _cgiPath.size()) ? "" : _cgiPath.substr(poz + 8, _cgiPath.size())); // check dif cases after put right parametr from the response
     //_env["PATH_INFO"] = getPathInfo(_request.getPath(), it_loc->getCgiExtension());
     _env["PATH_INFO"] = getPathInfo(_request.getPath(), loc.getCgiExtension());
     //_env["PATH_TRANSLATED"] = it_loc->getRoot() + (this->_env["PATH_INFO"] == "" ? "/" : this->_env["PATH_INFO"]);

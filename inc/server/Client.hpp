@@ -15,6 +15,7 @@ class Client {
         std::string         _requestBuffer;
         int                 _responseFd;
         const ServerConfig *_config;
+        int                 _listenFd;
         RequestParser       _parser; 
 
     public:
@@ -38,6 +39,11 @@ class Client {
         const std::string   &getRequestBuffer(void) const;
         int                 getResponseFd(void) const;
         const ServerConfig  *getConfig(void) const;
+
+        /* support virtual-host selection */
+        void                setListenFd(int fd);
+        int                 getListenFd(void) const;
+        void                setConfig(const ServerConfig *config);
 };
 
 #endif

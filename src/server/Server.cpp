@@ -10,6 +10,7 @@
 #include <netinet/in.h> // sockaddr_in, htons(), htonl()
 #include <fcntl.h> //To enable non-blocking mode fcntl() and O_NONBLOCK
 #include <cstring> // memset()
+#include <cctype> // tolower()
 #include <poll.h> //I/O multiplexing poll()
 #include <unistd.h> //close for fd
 #include <netdb.h> //getaddrinfo, freeaddrinfo
@@ -151,7 +152,7 @@ bool Server::setupSockets(void)
             pfd.revents = 0;
             this->_fds.push_back(pfd);
             this->_listenFds.push_back(listenFd);
-            this->_listenFdToServerIndex[listenFd] = i;
+            this->_listenFdToServerIndices[listenFd].push_back(i);
 
             openedHosts.push_back(host);
             openedPorts.push_back(port);
@@ -185,11 +186,12 @@ bool Server::acceptNewConnection(int fd)
         close(clientFd);
         return (false);
     }
-    std::map<int, size_t>::const_iterator cfgIt = this->_listenFdToServerIndex.find(fd);
-    if (cfgIt != this->_listenFdToServerIndex.end() &&
-        cfgIt->second < this->_allServers.size())
+    std::map<int, std::vector<size_t> >::const_iterator cfgIt = this->_listenFdToServerIndices.find(fd);
+    if (cfgIt != this->_listenFdToServerIndices.end() &&
+        !cfgIt->second.empty() &&
+        cfgIt->second[0] < this->_allServers.size())
     {
-        config = &this->_allServers[cfgIt->second];
+        config = &this->_allServers[cfgIt->second[0]]; // default server for this listen socket
     }
     if (config)
         this->_clients[clientFd] = Client(clientFd, config);
@@ -221,6 +223,8 @@ bool Server::acceptNewConnection(int fd)
                 << "\tIP:" << inet_ntoa(clientAddr.sin_addr) << std::endl
                 << "\tPORT: " << ntohs(clientAddr.sin_port) << "\033[0m" << std::endl;
 
+    // store which listen fd accepted this client so we can lookup candidate servers later
+    this->_clients[clientFd].setListenFd(fd);
     return (true);
 }
 
@@ -293,10 +297,43 @@ bool Server::readFromClient(int fd)
         setClientEvents(fd, POLLOUT);
         return (true);
     }
+    const ServerConfig *selectedConfig = client.getConfig();
+    int acceptListenFd = client.getListenFd();
+    std::map<int, std::vector<size_t> >::const_iterator lstIt =
+        this->_listenFdToServerIndices.find(acceptListenFd);
+    if (lstIt != this->_listenFdToServerIndices.end() && !lstIt->second.empty())
+    {
+        size_t chosen = lstIt->second[0]; // default
+        std::string host = request.getHeader("host");
+        if (!host.empty())
+        {
+            size_t colon = host.find(':');
+            if (colon != std::string::npos) host = host.substr(0, colon);
+            for (size_t i = 0; i < host.size(); ++i)
+                host[i] = std::tolower(static_cast<unsigned char>(host[i]));
+            bool matched = false;
+            for (size_t ci = 0; ci < lstIt->second.size() && !matched; ++ci)
+            {
+                size_t sidx = lstIt->second[ci];
+                if (sidx >= this->_allServers.size()) continue;
+                const std::vector<std::string> &names = this->_allServers[sidx].getServerNames();
+                for (size_t n = 0; n < names.size(); ++n)
+                {
+                    std::string nm = names[n];
+                    for (size_t k = 0; k < nm.size(); ++k) nm[k] = std::tolower(static_cast<unsigned char>(nm[k]));
+                    if (nm == host) { chosen = sidx; matched = true; break; }
+                }
+            }
+        }
+        selectedConfig = &this->_allServers[chosen];
+    }
+    client.setConfig(selectedConfig);
+
     HTTPResponse response;
     CGIHandler cgi(request, response, request.getBody());
-    ResponseBuilder builder(request, *client.getConfig(), response, cgi);
+    ResponseBuilder builder(request, *selectedConfig, response, cgi);
     builder.buildResponse(client);
+
     std::string serialized = response.serialize();
     int responseFd = responseToFd(serialized);
     if (responseFd < 0)
@@ -448,7 +485,7 @@ void Server::cleanup(void)
             close(this->_fds[i].fd);
     }
     this->_fds.clear();
-    this->_listenFdToServerIndex.clear();
+    this->_listenFdToServerIndices.clear();
     #ifdef DEBUG
         std::cout << "\033[31mAll resources cleaned!\033[0m" << std::endl;
     #endif
