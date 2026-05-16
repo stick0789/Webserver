@@ -425,7 +425,7 @@ void Server::setClientEvents(int fd, short events)
 
 void Server::checkTimeouts(void)
 {
-    for (std::map<int, Client>::iterator it = this->_clients.begin();
+    /*for (std::map<int, Client>::iterator it = this->_clients.begin();
         it != this->_clients.end();)
     {
         if(it->second.hasTimedOut(IDLE_TIMEOUT / 1000))
@@ -435,7 +435,16 @@ void Server::checkTimeouts(void)
         }
         else
             ++it;
+    }*/
+    std::vector<int> toKick;
+    for (std::map<int, Client>::iterator it = this->_clients.begin();
+        it != this->_clients.end(); ++it)
+    {
+        if (it->second.hasTimedOut(IDLE_TIMEOUT / 1000))
+            toKick.push_back(it->first);
     }
+    for (size_t i = 0; i < toKick.size(); i++)
+        kickClient(toKick[i]);
 }
 
 void Server::cleanup(void)
