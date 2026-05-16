@@ -215,7 +215,16 @@ void ResponseBuilder::buildErrorBody(Client &client)
     {
         std::string root = (_location ? _location->getRoot() : "./www");
         _fullPath = root + _serverConf.getErrorPages().at(code);
-        if (readFile(client) == 0)  // lee en setBody, no en fd
+
+        if (_fullPath.size() >= 4
+            && _fullPath.compare(_fullPath.size() - 4, 4, ".php") == 0)
+        {
+            _cgiFlag = 1;
+            _cgi.setCgiPath(_fullPath);
+            return;
+        }
+
+        if (readFile(client) == 0)
         {
             _contentType = "text/html";
             return;
@@ -274,19 +283,13 @@ int    ResponseBuilder::parsingPath()
         _fullPath = root + "/" + path;*/
 
     
-    if (!root.empty() && root.size() - 1 == '/' && !root.empty() && root[0] != '/')
+    if (!root.empty() && root[root.size() - 1] == '/' && root[0] != '/')
         _fullPath = root + path.substr(1);
-    else if (!root.empty() && root.size() - 1 != '/' && !root.empty() && root[0] != '/')
+    else if (!root.empty() && root[root.size() - 1] != '/' && root[0] != '/')
         _fullPath = root + "/" + path;
     else
         _fullPath = root + path;
-    
-    if (_location->getPath().find("cgi-bin") != std::string::npos || !_location->getCgiExtension().empty())
-    {
-        _cgiFlag = 1;
-        _cgi.setCgiPath(_fullPath);
-        return (0);
-    }
+
     if (isDirectory(_fullPath))
     {
         if (_fullPath[_fullPath.length() - 1] != '/')
@@ -295,30 +298,55 @@ int    ResponseBuilder::parsingPath()
             _redirectUrl = _request.getPath() + "/";
             return (1);
         }
+        std::string basePath = _fullPath;
+        if (basePath[basePath.length() - 1] == '/')
+            basePath.erase(basePath.length() - 1, 1);
+
         const std::vector<std::string>& indexFiles = _location->getIndexFiles();
         for (size_t i = 0; i < indexFiles.size(); i++)
         {
-            if (_fullPath[_fullPath.length() - 1] == '/')
-                _fullPath.erase(_fullPath.length() - 1, 1);
-            std::string indexPath = _fullPath + indexFiles[i];
+            std::string indexPath = basePath + "/" + indexFiles[i];
             if (fileExist(indexPath))
             {
                 _fullPath = indexPath;
-                return (0);
+                break;
             }
         }
-        if (_location->getAutoindex())
+
+        if (isDirectory(_fullPath))
         {
-            _indexFlag = true;
-            return (0);
+            if (_location->getAutoindex())
+            {
+                _indexFlag = true;
+                return (0);
+            }
+            _response.setStatusCode(403);
+            return (1);
         }
-        _response.setStatusCode(403);
-        return (1);
     }
+
     if (!fileExist(_fullPath))
     {
         _response.setStatusCode(404);
         return (1);
+    }
+
+    if (_location->getPath().find("cgi-bin") != std::string::npos)
+    {
+        _cgiFlag = 1;
+        _cgi.setCgiPath(_fullPath);
+        return (0);
+    }
+    if (!_location->getCgiExtension().empty())
+    {
+        const std::string ext = _location->getCgiExtension();
+        if (_fullPath.size() >= ext.size()
+            && _fullPath.compare(_fullPath.size() - ext.size(), ext.size(), ext) == 0)
+        {
+            _cgiFlag = 1;
+            _cgi.setCgiPath(_fullPath);
+            return (0);
+        }
     }
     return (0);
 }
@@ -396,58 +424,42 @@ void    ResponseBuilder::buildResponse(Client& client)
 {
     if (buildBody(client))
     {
-        setHeaders();
-        int fd = responseToFd(_response.serialize());
-        if (fd >= 0)
-            client.setResponseFd(fd);
-        return;
+        if (_cgiFlag != 1)
+        {
+            setHeaders();
+            int fd = responseToFd(_response.serialize());
+            if (fd >= 0)
+                client.setResponseFd(fd);
+            return;
+        }
     }
-        //return ;
+
     if (_cgiFlag == 1)
     {
-        //_cgi.initEnv();
         _cgi.initEnv(*_location);
         int cgiFD = _cgi.execute();
         if (cgiFD > 0)
             parsingCGIResponse(cgiFD);
     }
+
     if (_indexFlag == true)
     {
         if (buildHtmlIndex())
         {
             _response.setStatusCode(500);
             buildErrorBody(client);
-            //return ;
         }
         else
             _response.setStatusCode(200);
     }
-    /*else if (_indexFlag == false)
-    {
-        std::ifstream file(_fullPath.c_str());
-        if (!file.is_open())
-        {
-            _response.setStatusCode(404);
-            buildErrorBody(client);
-        }
-        else
-        {
-            std::stringstream ss;
-            ss << file.rdbuf();
-            _response.setBody(ss.str());
-            _response.setHeader("Content-Type", "text/html");
-            file.close();
-        }
-    }*/
+
     if (_response.getStatusCode() == 0)
         _response.setStatusCode(200);
 
     setHeaders();
-
     int fd = responseToFd(_response.serialize());
     if (fd >= 0)
         client.setResponseFd(fd);
-
 }
 
 int    ResponseBuilder::parsingCGIResponse(int fd)
@@ -474,7 +486,7 @@ int    ResponseBuilder::parsingCGIResponse(int fd)
         sep = cgiResponse.find("\n\n");
         if (sep != std::string::npos)
         {
-            cgiHead = cgiResponse.substr(0, 2);
+            cgiHead = cgiResponse.substr(0, sep);
             cgiBody = cgiResponse.substr(sep + 2);
         }
         else
@@ -513,7 +525,10 @@ void    ResponseBuilder::parseAndSetCgiHeads(std::string headPart)
                 _response.setStatusCode(code);
             }
             else if (key == "Content-Type")
+            {
                 _response.setHeader("Content-Type", value);
+                _contentType = value;
+            }
             else if (key == "Location")
             {
                 _response.setStatusCode(302);

@@ -18,7 +18,7 @@
 # define READ_BUFFER    4096    //"chunk" size to read from client.
 
 class Request;
-class client;
+class Client;
 
 class Server {
     private:
@@ -26,7 +26,7 @@ class Server {
         std::vector<struct pollfd>  _fds;
         std::vector<int>            _listenFds;
         std::map<int, Client>       _clients;
-        std::map<int, size_t>       _listenFdToServerIndex;
+        std::map<int, std::vector<size_t> > _listenFdToServerIndices;
 
         bool setupSockets(void);           // socket(), bind(), listen()
         bool acceptNewConnection(int fd);    // accept()
