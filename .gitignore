@@ -21,3 +21,5 @@ tmp/
 *.gch
 __pycache__/
 *.pyc
+tester
+cgi_tester
