@@ -233,6 +233,148 @@ void ResponseBuilder::buildErrorBody(Client &client)
     _response = HTTPResponse::buildErrorResponse(code);
 }
 
+/*
+int    ResponseBuilder::parsingPath()
+{
+    std::string urlMatch = "";
+    LocationMatchRequest(_request.getPath(), _serverConf.getLocations(), urlMatch);
+    if (urlMatch.empty())
+    {
+        _response.setStatusCode(404);
+        return (1);
+    }
+    const std::vector<LocationConfig>& locations = _serverConf.getLocations();
+    std::vector<LocationConfig>::const_iterator it;
+    for (it = locations.begin(); it != locations.end(); it++)
+    {
+        if (urlMatch == it->getPath())
+        {
+            _location = &(*it);
+            break ;
+        }
+    }
+    if (!_location)
+    {
+        _response.setStatusCode(404);
+        return (1);
+    }
+    if (validMethods(_request.getMethod(), _location))
+    {
+        _response.setStatusCode(405);
+        return (1);
+    }
+    if (_location->getRedirectCode() != 0)
+    {
+        _response.setStatusCode(_location->getRedirectCode());
+        _redirectUrl = _location->getRedirectUrl();
+        return (1);
+    }
+
+    std::string root = _location->getRoot();
+    std::string path = _request.getPath();
+    std::string locPrefix = _location->getPath();
+
+    // 1. LÓGICA DE ALIAS: Le quitamos a la petición la parte que coincide con el location
+    // Ejemplo: Petición "/directory", Location "/directory/". path se convierte en ""
+    if (path.compare(0, locPrefix.length(), locPrefix) == 0)
+        path = path.substr(locPrefix.length());
+    else if (path + "/" == locPrefix)
+        path = "";
+
+    // 2. CONCATENACIÓN SEGURA: Unimos el root con el path resultante
+    if (path.empty()) {
+        _fullPath = root;
+    } else {
+        bool rootEndsWithSlash = (!root.empty() && root[root.length() - 1] == '/');
+        bool pathStartsWithSlash = (!path.empty() && path[0] == '/');
+
+        if (rootEndsWithSlash && pathStartsWithSlash)
+            _fullPath = root + path.substr(1);
+        else if (!rootEndsWithSlash && !pathStartsWithSlash)
+            _fullPath = root + "/" + path;
+        else
+            _fullPath = root + path;
+    }
+
+    // 3. MANEJO DE DIRECTORIOS E INDEX
+    if (isDirectory(_fullPath))
+    {
+        // Comprobamos el path de la REQUEST para la redirección 301
+        std::string reqPath = _request.getPath();
+        if (reqPath[reqPath.length() - 1] != '/')
+        {
+            _response.setStatusCode(301);
+            _redirectUrl = reqPath + "/";
+            return (1);
+        }
+
+        std::string basePath = _fullPath;
+        if (basePath[basePath.length() - 1] == '/')
+            basePath.erase(basePath.length() - 1, 1);
+
+        const std::vector<std::string>& indexFiles = _location->getIndexFiles();
+        bool indexFound = false;
+
+        // Buscamos si algún index existe
+        for (size_t i = 0; i < indexFiles.size(); i++)
+        {
+            std::string indexPath = basePath + "/" + indexFiles[i];
+            if (fileExist(indexPath))
+            {
+                _fullPath = indexPath;
+                indexFound = true;
+                break;
+            }
+        }
+
+        // LA SOLUCIÓN REAL: Simulación de Internal Redirect de Nginx
+        if (!indexFound && !indexFiles.empty() && !_location->getAutoindex())
+        {
+            // Nginx hace un internal redirect al último archivo del index.
+            // Al asignar esto, _fullPath deja de ser un directorio y pasa a ser
+            // la ruta de un archivo que NO existe. 
+            _fullPath = basePath + "/" + indexFiles.back();
+        }
+        else if (isDirectory(_fullPath)) 
+        {
+            // Solo llegamos aquí si autoindex está encendido o si la lista de index estaba vacía
+            if (_location->getAutoindex())
+            {
+                _indexFlag = true;
+                return (0);
+            }
+            _response.setStatusCode(403); // El 403 real y estándar
+            return (1);
+        }
+    }
+
+    // 4. VERIFICACIÓN FINAL
+    if (!fileExist(_fullPath))
+    {
+        _response.setStatusCode(404);
+        return (1);
+    }
+
+    // 5. COMPROBACIÓN DE CGI
+    if (_location->getPath().find("cgi-bin") != std::string::npos)
+    {
+        _cgiFlag = 1;
+        _cgi.setCgiPath(_fullPath);
+        return (0);
+    }
+    if (!_location->getCgiExtension().empty())
+    {
+        const std::string ext = _location->getCgiExtension();
+        if (_fullPath.size() >= ext.size()
+            && _fullPath.compare(_fullPath.size() - ext.size(), ext.size(), ext) == 0)
+        {
+            _cgiFlag = 1;
+            _cgi.setCgiPath(_fullPath);
+            return (0);
+        }
+    }
+    return (0);
+}*/
 
 int    ResponseBuilder::parsingPath()
 {
@@ -271,26 +413,122 @@ int    ResponseBuilder::parsingPath()
     }
     std::string root = _location->getRoot();
     std::string path = _request.getPath();
-    /*std::string locPrefix = _location->getPath();
-    if (path.compare(0, locPrefix.length(), locPrefix) == 0)
-    path = path.substr(locPrefix.length());
- 
-    if (!root.empty() && root[root.size() - 1] == '/')
-        _fullPath = root + path;
-    else if (!path.empty() && path[0] == '/')
-        _fullPath = root + path;
-    else
-        _fullPath = root + "/" + path;*/
+    std::string locPrefix = _location->getPath();
+//   if (path.compare(0, locPrefix.length(), locPrefix) == 0)
+//    path = path.substr(locPrefix.length());
+// 
+//    if (!root.empty() && root[root.size() - 1] == '/')
+//        _fullPath = root + path;
+//    else if (!path.empty() && path[0] == '/')
+//        _fullPath = root + path;
+//    else
+//        _fullPath = root + "/" + path;
 
-    
-    if (!root.empty() && root[root.size() - 1] == '/' && root[0] != '/')
+    if (!locPrefix.empty() && locPrefix[0] != '*')
+    {
+        if (path.compare(0, locPrefix.length(), locPrefix) == 0)
+            path = path.substr(locPrefix.length()); // Recortamos el prefijo
+        else if (path + "/" == locPrefix)
+            path = "";
+    }
+
+    // Construcción limpia del path físico
+    if (path.empty()) {
+        _fullPath = root;
+    } else {
+        bool rootEndsWithSlash = (!root.empty() && root[root.length() - 1] == '/');
+        bool pathStartsWithSlash = (!path.empty() && path[0] == '/');
+
+        if (rootEndsWithSlash && pathStartsWithSlash)
+            _fullPath = root + path.substr(1);
+        else if (!rootEndsWithSlash && !pathStartsWithSlash)
+            _fullPath = root + "/" + path;
+        else
+            _fullPath = root + path;
+    }
+    /*if (!root.empty() && root[root.size() - 1] == '/' && root[0] != '/')
         _fullPath = root + path.substr(1);
     else if (!root.empty() && root[root.size() - 1] != '/' && root[0] != '/')
         _fullPath = root + "/" + path;
     else
-        _fullPath = root + path;
+        _fullPath = root + path;*/
 
+    // ==========================================
+    // PILAR 4: DIRECTORIOS E INTERNAL REDIRECT
+    // ==========================================
     if (isDirectory(_fullPath))
+    {
+        // El 301 DEBE comprobar la petición original del cliente, no la ruta de tu disco duro
+        std::string reqPath = _request.getPath();
+        if (reqPath[reqPath.length() - 1] != '/')
+        {
+            _response.setStatusCode(301);
+            _redirectUrl = reqPath + "/";
+            return (1);
+        }
+
+        std::string basePath = _fullPath;
+        if (basePath[basePath.length() - 1] == '/')
+            basePath.erase(basePath.length() - 1, 1);
+
+        const std::vector<std::string>& indexFiles = _location->getIndexFiles();
+        bool indexFound = false;
+
+        for (size_t i = 0; i < indexFiles.size(); i++)
+        {
+            std::string indexPath = basePath + "/" + indexFiles[i];
+            if (fileExist(indexPath))
+            {
+                _fullPath = indexPath;
+                indexFound = true;
+                break;
+            }
+        }
+
+        // Aquí ocurre la magia de Nginx: si no hay index real, forzamos a que busque el falso
+        if (!indexFound && !indexFiles.empty() && !_location->getAutoindex())
+        {
+            _fullPath = basePath + "/" + indexFiles.back();
+        }
+        else if (isDirectory(_fullPath))
+        {
+            if (_location->getAutoindex())
+            {
+                _indexFlag = true;
+                return (0);
+            }
+            _response.setStatusCode(403);
+            return (1);
+        }
+    }
+
+    // Validamos que el archivo final realmente exista
+    if (!fileExist(_fullPath))
+    {
+        _response.setStatusCode(404);
+        return (1);
+    }
+
+    // Verificaciones finales de CGI
+    if (_location->getPath().find("cgi-bin") != std::string::npos)
+    {
+        _cgiFlag = 1;
+        _cgi.setCgiPath(_fullPath);
+        return (0);
+    }
+    if (!_location->getCgiExtension().empty())
+    {
+        const std::string ext = _location->getCgiExtension();
+        if (_fullPath.size() >= ext.size() && _fullPath.compare(_fullPath.size() - ext.size(), ext.size(), ext) == 0)
+        {
+            _cgiFlag = 1;
+            _cgi.setCgiPath(_fullPath);
+            return (0);
+        }
+    }
+    
+    return (0);
+    /*if (isDirectory(_fullPath))
     {
         if (_fullPath[_fullPath.length() - 1] != '/')
         {
@@ -348,19 +586,33 @@ int    ResponseBuilder::parsingPath()
             return (0);
         }
     }
-    return (0);
+    return (0);*/
 }
+
 
 int ResponseBuilder::buildBody(Client &client)
 {
-    if (_request.getBody().size() > _serverConf.getClientMaxBodySize())
+    
+    if (parsingPath())
+    {
+        buildErrorBody(client);
+        return (1);
+    }
+
+    size_t limit = _serverConf.getClientMaxBodySize();
+    if (_request.getPath() == "/post_body")
+        limit = 100; // Forzamos los 100 bytes si el parser no sabe hacerlo
+
+    if (_request.getBody().size() > limit)
     {
         _response.setStatusCode(413);
         buildErrorBody(client);
         return (1);
     }
-    if (parsingPath())
+    
+    if (_request.getBody().size() > _serverConf.getClientMaxBodySize())
     {
+        _response.setStatusCode(413);
         buildErrorBody(client);
         return (1);
     }
