@@ -22,40 +22,6 @@ void LocationMatchRequest(const std::string &reqPath, const std::vector<Location
         std::string locPath = it->getPath();
 
         // 1. PRIORIDAD ALTA: Coincidencia por extensión (ej. "*.bla")
-        if (locPath.length() > 1 && locPath[0] == '*')
-        {
-            std::string ext = locPath.substr(1); // Nos quedamos con ".bla"
-            if (reqPath.length() >= ext.length() && 
-                reqPath.compare(reqPath.length() - ext.length(), ext.length(), ext) == 0)
-            {
-                // Si termina en .bla, esta es la regla definitiva. Ignoramos los directorios.
-                urlMatch = locPath;
-                return; 
-            }
-        }
-        // 2. PRIORIDAD MEDIA: Coincidencia por prefijo más largo (ej. "/directory/")
-        else if (reqPath.compare(0, locPath.length(), locPath) == 0)
-        {
-            if (locPath == "/" || reqPath.length() == locPath.length() || reqPath[locPath.length()] == '/')
-            {
-                if (locPath.length() >= longestMatch)
-                {
-                    longestMatch = locPath.length();
-                    urlMatch = locPath;
-                }
-            }
-        }
-    }
-}
-/*
-void LocationMatchRequest(const std::string &reqPath, const std::vector<LocationConfig> &locsPath, std::string &urlMatch)
-{
-    size_t  longestMatch = 0;
-    std::vector<LocationConfig>::const_iterator it;
-    for (it = locsPath.begin(); it != locsPath.end(); it++)
-    {
-        std::string locPath = it->getPath();
-
         if (!locPath.empty() && locPath[0] == '*')
         {
             std::string suffix = locPath.substr(1);
@@ -72,8 +38,8 @@ void LocationMatchRequest(const std::string &reqPath, const std::vector<Location
             }
             continue;
         }
-
-        if (reqPath.compare(0, locPath.length(), locPath) == 0)
+        // 2. PRIORIDAD MEDIA: Coincidencia por prefijo más largo (ej. "/directory/")
+        else if (reqPath.compare(0, locPath.length(), locPath) == 0)
         {
             if (locPath == "/" || reqPath.length() == locPath.length() || reqPath[locPath.length()] == '/')
             {
@@ -85,7 +51,7 @@ void LocationMatchRequest(const std::string &reqPath, const std::vector<Location
             }
         }
     }
-}*/
+}
 
 int  validMethods(const std::string &method, const LocationConfig *ptr)
 {
