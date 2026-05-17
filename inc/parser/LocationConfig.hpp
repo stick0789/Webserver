@@ -18,6 +18,7 @@ class LocationConfig {
         int _redirectCode;
         std::string _redirectUrl;
         std::vector<std::string> _tryFiles;
+        std::size_t _locationMaxBodySize;
 
 
     public:
@@ -39,6 +40,7 @@ class LocationConfig {
         int getRedirectCode(void) const;
         const std::string &getRedirectUrl(void) const;
         const std::vector<std::string> &getTryFiles(void) const;
+        size_t getLocationMaxBodySize(void) const;
 
         //setters
         void setPath(const std::string &path);
@@ -53,6 +55,7 @@ class LocationConfig {
         void setRedirectCode(int code);
         void setRedirectUrl(const std::string &path);
         void setTryFiles(const std::vector<std::string> &files);
+        void setLocationMaxBodySize(size_t maxBodySize);
 
         //adders
         void addAllowedMethod(const std::string &method);

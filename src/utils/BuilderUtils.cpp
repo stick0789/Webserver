@@ -19,6 +19,24 @@ void LocationMatchRequest(const std::string &reqPath, const std::vector<Location
     for (it = locsPath.begin(); it != locsPath.end(); it++)
     {
         std::string locPath = it->getPath();
+
+        if (!locPath.empty() && locPath[0] == '*')
+        {
+            std::string suffix = locPath.substr(1);
+            if (suffix.empty()) continue;
+            if (reqPath.length() >= suffix.length()
+                && reqPath.compare(reqPath.length() - suffix.length(), suffix.length(), suffix) == 0)
+            {
+                size_t matchLen = suffix.length();
+                if (matchLen >= longestMatch)
+                {
+                    longestMatch = matchLen;
+                    urlMatch = locPath;
+                }
+            }
+            continue;
+        }
+
         if (reqPath.compare(0, locPath.length(), locPath) == 0)
         {
             if (locPath == "/" || reqPath.length() == locPath.length() || reqPath[locPath.length()] == '/')

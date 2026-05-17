@@ -10,6 +10,8 @@ LocationConfig::LocationConfig(void)
 {
     this->_autoindex = false;
     this->_redirectCode = 0;
+    this->_locationMaxBodySize = 0;
+
 }
 
 LocationConfig::LocationConfig(const LocationConfig &other)
@@ -26,6 +28,8 @@ LocationConfig::LocationConfig(const LocationConfig &other)
     this->_redirectCode = other._redirectCode;
     this->_redirectUrl = other._redirectUrl;
     this->_tryFiles = other._tryFiles;
+    this->_locationMaxBodySize = other._locationMaxBodySize;
+
 }
 
 LocationConfig &LocationConfig::operator=(const LocationConfig &other)
@@ -44,6 +48,7 @@ LocationConfig &LocationConfig::operator=(const LocationConfig &other)
         this->_redirectCode = other._redirectCode;
         this->_redirectUrl = other._redirectUrl;
         this->_tryFiles = other._tryFiles;
+        this->_locationMaxBodySize = other._locationMaxBodySize;
     }
     return (*this);
 }
@@ -113,6 +118,12 @@ const std::vector<std::string> &LocationConfig::getTryFiles(void) const
     return (this->_tryFiles);
 }
 
+size_t LocationConfig::getLocationMaxBodySize(void) const
+{
+    return (this->_locationMaxBodySize);
+}
+
+
 //setters
 void LocationConfig::setPath(const std::string &path)
 {
@@ -173,6 +184,12 @@ void LocationConfig::setTryFiles(const std::vector<std::string> &files)
 {
     this->_tryFiles = files;
 }
+
+void LocationConfig::setLocationMaxBodySize(size_t maxBodySize)
+{
+    this->_locationMaxBodySize = maxBodySize;
+}
+
 
 //adders
 void LocationConfig::addAllowedMethod(const std::string &method)

@@ -55,6 +55,7 @@ class ConfigParser{
         bool parseCGIpass(LocationConfig &location);
         bool parseLocation(LocationConfig &location);
         bool parseReturn(LocationConfig &location);
+        bool parseLocationMaxBodySize(LocationConfig &location);
         
         //const std::string   &getFileBuffer(void);
         const std::vector<ServerConfig> &getParsedServerConfigs(void) const;

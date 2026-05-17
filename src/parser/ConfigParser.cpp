@@ -401,6 +401,7 @@ bool ConfigParser::parseLocationBlock(ServerConfig &server)
         "autoindex",
         "cgi_extension",
         "cgi_pass",
+        "client_max_body_size",
         "location",
         "return"
     };
@@ -435,7 +436,7 @@ bool ConfigParser::parseLocationBlock(ServerConfig &server)
     while (hasToken() && getToken() != "}")
     {
         i = 0;
-        while (i < 9 && getToken() != locationDirectives[i])
+        while (i < 10 && getToken() != locationDirectives[i])
             i++;
         switch(i)
         {
@@ -488,14 +489,21 @@ bool ConfigParser::parseLocationBlock(ServerConfig &server)
                     return (false);
                 }
                 break;
-            case 7: if (!parseLocation(location)) { 
+            case 7: if(!parseLocationMaxBodySize(location)){
+                    #ifdef DEBUG
+                                    std::cout << "[DEBUG] Error in locationMaxBodySize. Token: '" << getToken() << "'" << std::endl;
+                    #endif
+                    return (false);
+                }
+                break;
+            case 8: if (!parseLocation(location)) { 
                     #ifdef DEBUG
                                     std::cout << "[DEBUG] Error in parseLocation (nested). Token: '" << getToken() << "'" << std::endl;
                     #endif
                     return (false);
                 }
                 break;
-            case 8: if(!parseReturn(location)){
+            case 9: if(!parseReturn(location)){
                     #ifdef DEBUG
                                     std::cout << "[DEBUG] Error in parseReturn. Token: '" << getToken() << "'" << std::endl;
                     #endif
@@ -516,6 +524,8 @@ bool ConfigParser::parseLocationBlock(ServerConfig &server)
         location.addIndexFile(server.getIndexFiles().empty() ? "index.html" : server.getIndexFiles()[0]);
     if (location.getRoot().empty())
         location.setRoot(server.getRoot());
+    if (location.getLocationMaxBodySize() == 0)
+        location.setLocationMaxBodySize(server.getClientMaxBodySize());
     
 
     server.addLocation(location);
@@ -642,12 +652,20 @@ bool ConfigParser::parseReturn(LocationConfig &location)
     return (true);
 }
 
-/*
-const std::string   &ConfigParser::getFileBuffer(void)
+bool ConfigParser::parseLocationMaxBodySize(LocationConfig &location)
 {
-    return (this->_fileBuffer);
+    if (!consumeToken("client_max_body_size") || !hasToken())
+        return (false);
+    std::string value = getToken();
+    if (!isAllDigits(value)) return (false);
+    std::stringstream ss(value);
+    std::size_t num;
+    if (!(ss >> num)) return (false);
+    if (!consumeToken(value) || !consumeToken(";"))
+        return (false);
+    location.setLocationMaxBodySize(num);
+    return (true);
 }
-*/
 
 const std::vector<ServerConfig> &ConfigParser::getParsedServerConfigs(void) const
 {
