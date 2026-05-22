@@ -322,9 +322,9 @@ int ResponseBuilder::parsingPath()
     if (!locPrefix.empty() && locPrefix[0] != '*')
     {
         if (path.compare(0, locPrefix.length(), locPrefix) == 0)
-            path = path.substr(locPrefix.length()); // Recortamos el prefijo
+            path = path.substr(locPrefix.length()); 
         else if (path + "/" == locPrefix)
-            path = "";
+            path = "/";
     }
 
     // Clean construction of the physical path
