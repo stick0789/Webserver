@@ -4,6 +4,8 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
+#include <iostream>
+
 
 // ─── Constructor / Destructor ────────────────────────────────────────────────
 
@@ -455,9 +457,7 @@ void RequestParser::_parseChunkTrailer()
 			_state = COMPLETE;
 			return;
 		}
-		// Discard trailer headers
 	}
-	// Need more data
 }
 
 // ─── Utility Functions ───────────────────────────────────────────────────────

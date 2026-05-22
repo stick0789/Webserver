@@ -25,6 +25,7 @@ std::map<std::string, std::string> MimeTypes::_initMimeMap()
 	// Text
 	m[".html"] = "text/html";
 	m[".htm"]  = "text/html";
+	m[".php"]  = "text/html";
 	m[".css"]  = "text/css";
 	m[".txt"]  = "text/plain";
 	m[".csv"]  = "text/csv";

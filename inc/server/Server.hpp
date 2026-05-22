@@ -15,7 +15,7 @@
 # define READ_TIMEOUT   5000    //ms, for a complex read
 # define KEEP_TIMEOUT   15000   //for keep-alive petitions
 
-# define READ_BUFFER    4096    //"chunk" size to read from client.
+# define READ_BUFFER    8192    //"chunk" size to read from client.4096
 
 class Request;
 class Client;

@@ -259,6 +259,19 @@ bool Server::readFromClient(int fd)
         return (false);
     
     buffer[bytesRead] = '\0';
+    /*
+    // --- RASTREADOR DE MEGABYTES ---
+    static size_t byte_counter = 0;
+    static size_t total_mb = 0;
+    byte_counter += bytesRead;
+    
+    if (byte_counter >= 1048576) { // Si junta 1 MB
+        std::cout << "📦 " << std::flush;
+        byte_counter -= 1048576;
+        total_mb++;
+        if (total_mb % 25 == 0) std::cout << " (" << total_mb << " MB)\n"; // Salto de línea cada 25MB
+    }*/
+
     //client.appendRequest(buffer, bytesRead);
     client.getParser().feed(std::string(buffer, bytesRead));
     #ifdef DEBUG
@@ -337,11 +350,11 @@ bool Server::readFromClient(int fd)
     ResponseBuilder builder(request, *selectedConfig, response, cgi);
     builder.buildResponse(client);
 
-    std::string serialized = response.serialize();
+    /*std::string serialized = response.serialize();
     int responseFd = responseToFd(serialized);
     if (responseFd < 0)
         return (false);
-    client.setResponseFd(responseFd);
+    client.setResponseFd(responseFd);*/
     setClientEvents(fd, POLLOUT);
  
     // ── Keep-alive: reset the parser for the next request ───────────

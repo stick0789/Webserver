@@ -21,7 +21,7 @@ void LocationMatchRequest(const std::string &reqPath, const std::vector<Location
     {
         std::string locPath = it->getPath();
 
-        // 1. PRIORIDAD ALTA: Coincidencia por extensión (ej. "*.bla")
+        /*// 1. PRIORIDAD ALTA: Coincidencia por extensión (ej. "*.bla")
         if (!locPath.empty() && locPath[0] == '*')
         {
             std::string suffix = locPath.substr(1);
@@ -37,8 +37,26 @@ void LocationMatchRequest(const std::string &reqPath, const std::vector<Location
                 }
             }
             continue;
+        }*/
+        // 1. HIGH PRIORITY: Match by extension (e.g., "*.bla")
+        if (locPath.length() > 1 && locPath[0] == '*')
+        {
+            std::string ext = locPath.substr(1); // Nos quedamos con ".bla"
+            size_t extPos = reqPath.find(ext);
+            
+            // If the path contains ".bla"
+            if (extPos != std::string::npos)
+            {
+                if (extPos + ext.length() == reqPath.length() || 
+                    reqPath[extPos + ext.length()] == '?' || 
+                    reqPath[extPos + ext.length()] == '/')
+                {
+                    urlMatch = locPath;
+                    return; 
+                }
+            }
         }
-        // 2. PRIORIDAD MEDIA: Coincidencia por prefijo más largo (ej. "/directory/")
+        // 2. MEDIUM PRIORITY: Match by longest prefix (e.g., "/directory/")
         else if (reqPath.compare(0, locPath.length(), locPath) == 0)
         {
             if (locPath == "/" || reqPath.length() == locPath.length() || reqPath[locPath.length()] == '/')
