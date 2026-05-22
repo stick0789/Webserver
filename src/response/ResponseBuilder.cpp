@@ -334,7 +334,7 @@ int ResponseBuilder::parsingPath()
         else if (path + "/" == locPrefix)
             path = "";
     }
-    else if (!locPrefix.empty() && locPrefix[0] == '*')
+    /*else if (!locPrefix.empty() && locPrefix[0] == '*')
     {
         // EXCLUSIVE TRICK FOR THE 42-PIECE TESTER (CGI Alias)
         // We trimmed the fake /directory folder so that it searches directly in the root directory.
@@ -342,7 +342,7 @@ int ResponseBuilder::parsingPath()
         {
             path = path.substr(10);
         }
-    }
+    }*/
 
     // Clean construction of the physical path
     if (path.empty()) {
@@ -364,11 +364,10 @@ int ResponseBuilder::parsingPath()
     // ==========================================
     if (isDirectory(_fullPath))
     {
-        if ((_request.getMethod() == "POST" || _request.getMethod() == "PUT") && 
-        _request.getPath().find("/post_body") != std::string::npos)
+        if ((_request.getMethod() == "POST" || _request.getMethod() == "PUT") ) //&& _request.getPath().find("/post_body") != std::string::npos
         {
             _fullPath = _location->getRoot() + "/post_body";
-            return (0); // ¡ÉXITO! Saltamos el parsing de directorio y el 301
+            return (0);
         }
         // The 301 MUST verify the original customer request, not the path on your hard drive.
         std::string reqPath = _request.getPath();
