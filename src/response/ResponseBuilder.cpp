@@ -299,14 +299,6 @@ int ResponseBuilder::parsingPath()
     }
     if (validMethods(_request.getMethod(), _location))
     {
-        /*std::cout << "\n🚨 [DEBUG 405] ¡ERROR DE MÉTODO DETECTADO!\n";
-        std::cout << " -> Method de la Request : '" << _request.getMethod() << "'\n";
-        std::cout << " -> Path de la Request   : '" << _request.getPath() << "'\n";
-        std::cout << " -> Location ganadora    : '" << _location->getPath() << "'\n";
-        std::cout << " -> Métodos permitidos   : ";
-        for (size_t i = 0; i < _location->getAllowedMethods().size(); i++)
-            std::cout << "[" << _location->getAllowedMethods()[i] << "] ";
-        std::cout << "\n\n";*/
         _response.setStatusCode(405);
         return (1);
     }
@@ -334,15 +326,6 @@ int ResponseBuilder::parsingPath()
         else if (path + "/" == locPrefix)
             path = "";
     }
-    /*else if (!locPrefix.empty() && locPrefix[0] == '*')
-    {
-        // EXCLUSIVE TRICK FOR THE 42-PIECE TESTER (CGI Alias)
-        // We trimmed the fake /directory folder so that it searches directly in the root directory.
-        if (path.find("/directory/") == 0)
-        {
-            path = path.substr(10);
-        }
-    }*/
 
     // Clean construction of the physical path
     if (path.empty()) {
@@ -366,14 +349,28 @@ int ResponseBuilder::parsingPath()
     {
         if ((_request.getMethod() == "POST" || _request.getMethod() == "PUT") ) //&& _request.getPath().find("/post_body") != std::string::npos
         {
-            _fullPath = _location->getRoot() + "/post_body";
+            //_fullPath = _location->getRoot() + "/post_body";
+            std::string rootStr = _location->getRoot();
+            std::string reqPath = _request.getPath();
+            
+            // Concatenación segura para evitar dobles barras (ej: ./www/html//post_body)
+            if (!rootStr.empty() && rootStr[rootStr.length() - 1] == '/' && !reqPath.empty() && reqPath[0] == '/')
+                _fullPath = rootStr + reqPath.substr(1);
+            else if (!rootStr.empty() && rootStr[rootStr.length() - 1] != '/' && !reqPath.empty() && reqPath[0] != '/')
+                _fullPath = rootStr + "/" + reqPath;
+            else
+                _fullPath = rootStr + reqPath;
             return (0);
         }
+        
         // The 301 MUST verify the original customer request, not the path on your hard drive.
         std::string reqPath = _request.getPath();
         if (reqPath[reqPath.length() - 1] != '/')
         {
             _response.setStatusCode(301);
+            /*if (reqPath[0] != '/')
+                _redirectUrl = "/" + reqPath + "/";
+            else*/
             _redirectUrl = reqPath + "/";
             return (1);
         }
