@@ -29,7 +29,7 @@ class CGIHandler
 {
     private:
             pid_t   _cgiPid;
-            int     _pipeIn[2];
+            //int     _pipeIn[2];
             int     _pipeOut[2];
             std::map<std::string, std::string> _env;
             std::string _fullPath;
