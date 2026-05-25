@@ -52,41 +52,6 @@ RequestParser& RequestParser::operator=(const RequestParser& other)
 }
 
 // ─── Public Interface ────────────────────────────────────────────────────────
-/*
-void RequestParser::feed(Client client)
-{
-	if (_state == COMPLETE || _state == ERROR)
-		return;
-
-	_buffer.append(client.getRequestBuffer());
-
-	while (_state != COMPLETE && _state != ERROR)
-	{
-		ParseState prevState = _state;
-		size_t prevBufferSize = _buffer.size();
-
-		if (_state == PARSING_REQUEST_LINE)
-			_parseRequestLine();
-		else if (_state == PARSING_HEADERS)
-			_parseHeaders();
-		else if (_state == PARSING_BODY)
-			_parseBodyFixed();
-		else if (_state == PARSING_CHUNK_SIZE)
-			_parseChunkSize();
-		else if (_state == PARSING_CHUNK_DATA)
-			_parseChunkData();
-		else if (_state == PARSING_CHUNK_TRAILER)
-			_parseChunkTrailer();
-
-		if (_state == COMPLETE)
-			_request.setIsComplete(true);
-
-		// Break if no progress was made (need more data)
-		if (_state == prevState && _buffer.size() == prevBufferSize)
-			break;
-	}
-}*/
-
 void RequestParser::feed(const std::string& data)
 {
 	if (_state == COMPLETE || _state == ERROR)
@@ -156,7 +121,6 @@ void RequestParser::setMaxBodySize(size_t size)
 }
 
 // ─── Request Line Parsing ────────────────────────────────────────────────────
-
 void RequestParser::_parseRequestLine()
 {
 	std::string line;
@@ -231,7 +195,6 @@ void RequestParser::_parseRequestLine()
 }
 
 // ─── Header Parsing ──────────────────────────────────────────────────────────
-
 void RequestParser::_parseHeaders()
 {
 	std::string line;
@@ -241,12 +204,8 @@ void RequestParser::_parseHeaders()
 		if (line.empty())
 		{
 			// Validate mandatory headers
-			if (_request.getHttpVersion() == "HTTP/1.1" &&
-				!_request.hasHeader("host"))
+			if (_request.getHttpVersion() == "HTTP/1.1" && !_request.hasHeader("host"))
 				return _setError(400);
-
-			// Check for duplicate/conflicting Content-Length
-			// (already handled during parsing)
 
 			_determineBodyStrategy();
 			return;
@@ -302,11 +261,9 @@ void RequestParser::_parseHeaders()
 			_request.setHeader(name, value);
 		}
 	}
-	// If we get here, we need more data (no empty line found yet)
 }
 
 // ─── Body Strategy ───────────────────────────────────────────────────────────
-
 void RequestParser::_determineBodyStrategy()
 {
 	std::string transferEncoding = _request.getHeader("transfer-encoding");
@@ -316,8 +273,7 @@ void RequestParser::_determineBodyStrategy()
 	if (!transferEncoding.empty())
 	{
 		if (_toLower(transferEncoding) != "chunked")
-			return _setError(501); // Only chunked is supported
-
+			return _setError(501);
 		// Remove Content-Length if present (RFC 7230 3.3.3)
 		if (_request.hasHeader("content-length"))
 			_request.setHeader("content-length", "");
@@ -353,12 +309,10 @@ void RequestParser::_determineBodyStrategy()
 	if (_request.getMethod() == "POST")
 		return _setError(411); // Length Required
 
-	// GET/DELETE with no body
 	_state = COMPLETE;
 }
 
 // ─── Fixed-Length Body ───────────────────────────────────────────────────────
-
 void RequestParser::_parseBodyFixed()
 {
 	size_t remaining = _contentLength - _bodyBytesRead;
@@ -374,7 +328,6 @@ void RequestParser::_parseBodyFixed()
 
 	if (_bodyBytesRead >= _contentLength)
 		_state = COMPLETE;
-	// else: need more data, return and wait for next feed()
 }
 
 // ─── Chunked Body ────────────────────────────────────────────────────────────
@@ -433,11 +386,11 @@ void RequestParser::_parseChunkData()
 	}
 
 	if (_chunkBytesRead < _currentChunkSize)
-		return; // Need more data
+		return;
 
 	// Chunk data is complete, expect \r\n after it
 	if (_buffer.size() < 2)
-		return; // Need more data for trailing \r\n
+		return;
 
 	if (_buffer[0] != '\r' || _buffer[1] != '\n')
 		return _setError(400);
@@ -461,7 +414,6 @@ void RequestParser::_parseChunkTrailer()
 }
 
 // ─── Utility Functions ───────────────────────────────────────────────────────
-
 bool RequestParser::_findLine(std::string& line)
 {
 	std::string::size_type pos = _buffer.find("\r\n");

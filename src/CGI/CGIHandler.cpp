@@ -18,7 +18,7 @@
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h> // Asegúrate de tener esto arriba del todo en tu archivo
+#include <fcntl.h>
 #include <cstdio>
 
 
@@ -92,7 +92,6 @@ void    CGIHandler::initEnv(const LocationConfig& loc)
     int poz = 0;
     _env["AUTH_TYPE"] = "Basic";
 
-    // 1. EL TAMAÑO REAL DEL BODY (Vital para los 100MB fragmentados)
     std::stringstream ss;
     ss << _request.getBody().size();
     _env["CONTENT_LENGTH"] = ss.str();
@@ -101,14 +100,10 @@ void    CGIHandler::initEnv(const LocationConfig& loc)
     _env["GATEWAY_INTERFACE"] = "CGI/1.1";
     _env["SCRIPT_NAME"] = _cgiPath;
     _env["SCRIPT_FILENAME"] = _cgiPath;
-
-    // 2. EL PATH_INFO QUE EXIGE EL TESTER
     _env["PATH_INFO"] = _request.getPath();
-    
     _env["PATH_TRANSLATED"] = loc.getRoot() + (this->_env["PATH_INFO"] == "" ? "/" : this->_env["PATH_INFO"]);
     _env["QUERY_STRING"] = decode(_request.getQueryString());
     _env["REMOTE_ADDR"] = _request.getHeader("host");
-    
     poz = findStart(_request.getHeader("host"), ":");
     _env["SERVER_NAME"] = (poz > 0 ? _request.getHeader("host").substr(0, poz) : "");
     _env["SERVER_PORT"] = (poz > 0 ? _request.getHeader("host").substr(poz + 1, _request.getHeader("host").size()) : "");
@@ -121,7 +116,6 @@ void    CGIHandler::initEnv(const LocationConfig& loc)
     _env["SERVER_SOFTWARE"] = "AMANIX";
 
     // --- RECOPILADOR DE SPECIAL HEADERS (RFC 3875) ---
-    // (Asegúrate de usar el nombre correcto de la función que te devuelva tu map de headers)
     const std::map<std::string, std::string>& headers = _request.getHeaders(); 
     std::map<std::string, std::string>::const_iterator headIt;
     
@@ -136,10 +130,9 @@ void    CGIHandler::initEnv(const LocationConfig& loc)
             if (headerName[j] == '-')
                 envKey += '_';
             else
-                envKey += std::toupper(headerName[j]); // Lo pasa a mayúsculas
+                envKey += std::toupper(headerName[j]);
         }
         
-        // Si no es una de las que ya pusimos a mano, la añadimos
         if (_env.find(envKey) == _env.end())
             _env[envKey] = headerValue;
     }
@@ -219,10 +212,9 @@ int CGIHandler::execute()
         return (1);
     }
 
-    // --- MODO 100% LEGAL ---
     std::string tmpFile = "/tmp/webserv_cgi_in.tmp";
     
-    // 1. Abrir solo para escritura, escribir y cerrar (Reemplaza al lseek)
+    // 1. Open just to read, write and close
     int fdWrite = open(tmpFile.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0666);
     if (fdWrite >= 0)
     {
@@ -231,7 +223,7 @@ int CGIHandler::execute()
         close(fdWrite);
     }
 
-    // 2. Volver a abrir solo para lectura (Puntero en el byte 0 garantizado)
+    // 2. Open again just to read
     int fdIn = open(tmpFile.c_str(), O_RDONLY);
     if (fdIn < 0)
     {
@@ -262,7 +254,7 @@ int CGIHandler::execute()
     {
         close(_pipeOut[1]);
         close(fdIn);
-        std::remove(tmpFile.c_str()); // C++98 legal (ya lo usas en DELETE)
+        std::remove(tmpFile.c_str());
     }
     
     return (_pipeOut[0]);

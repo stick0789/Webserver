@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     // Signals 
     signal(SIGINT, goodByeHandler);
     signal(SIGTERM, goodByeHandler);
-    signal(SIGPIPE, SIG_IGN); // Prevents crashes
+    signal(SIGPIPE, SIG_IGN);
 
     if(argc > 2)
     {

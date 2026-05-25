@@ -5,17 +5,17 @@
 #include "../inc/CGI/CGIHandler.hpp"
 
 #include <iostream>
-#include <sys/types.h> //System types (size_t, ssize_t...)
-#include <sys/socket.h> //socket(), bind(), listen(), accept(), setsockopt(), sockaddr
-#include <netinet/in.h> // sockaddr_in, htons(), htonl()
-#include <fcntl.h> //To enable non-blocking mode fcntl() and O_NONBLOCK
-#include <cstring> // memset()
-#include <cctype> // tolower()
-#include <poll.h> //I/O multiplexing poll()
-#include <unistd.h> //close for fd
-#include <netdb.h> //getaddrinfo, freeaddrinfo
-#include <sstream> //to turn int to string
-#include <arpa/inet.h> //for inet_ntoa
+#include <sys/types.h> 
+#include <sys/socket.h> 
+#include <netinet/in.h> 
+#include <fcntl.h> 
+#include <cstring> 
+#include <cctype> 
+#include <poll.h> 
+#include <unistd.h> 
+#include <netdb.h> 
+#include <sstream> 
+#include <arpa/inet.h> 
 
 // Reference to global run flag from main.cpp
 extern volatile bool g_running;
@@ -61,7 +61,7 @@ static int responseToFd(const std::string &responseStr)
         close(pipeFds[0]);
         return (-1);
     }
-    return (pipeFds[0]); // fd de lectura
+    return (pipeFds[0]);
 }
 
 
@@ -259,39 +259,12 @@ bool Server::readFromClient(int fd)
         return (false);
     
     buffer[bytesRead] = '\0';
-    /*
-    // --- RASTREADOR DE MEGABYTES ---
-    static size_t byte_counter = 0;
-    static size_t total_mb = 0;
-    byte_counter += bytesRead;
-    
-    if (byte_counter >= 1048576) { // Si junta 1 MB
-        std::cout << "📦 " << std::flush;
-        byte_counter -= 1048576;
-        total_mb++;
-        if (total_mb % 25 == 0) std::cout << " (" << total_mb << " MB)\n"; // Salto de línea cada 25MB
-    }*/
 
-    //client.appendRequest(buffer, bytesRead);
     client.getParser().feed(std::string(buffer, bytesRead));
     #ifdef DEBUG
         std::cout << "[DEBUG] Received " << bytesRead << " bytes from fd " << fd << std::endl;
     #endif
-/**
- * if (client.getRequestBuffer().find("\r\n\r\n") != std::string::npos)
-    {
-        #ifdef DEBUG
-            std::cout << "[DEBUG] Request complete for fd " << fd << std::endl;
-        #endif
 
-        //httphandler calls here
-        RequestParser handler;
-        handler.feed(client);
-
-        if (client.hasResponse())
-            setClientEvents(fd, POLLOUT);
-    }
- * -- */
     if (!client.getParser().isComplete())
     {
         return (true);
@@ -350,11 +323,6 @@ bool Server::readFromClient(int fd)
     ResponseBuilder builder(request, *selectedConfig, response, cgi);
     builder.buildResponse(client);
 
-    /*std::string serialized = response.serialize();
-    int responseFd = responseToFd(serialized);
-    if (responseFd < 0)
-        return (false);
-    client.setResponseFd(responseFd);*/
     setClientEvents(fd, POLLOUT);
  
     // ── Keep-alive: reset the parser for the next request ───────────
@@ -452,7 +420,7 @@ void Server::kickClient(int fd, const std::string &reason)
     {
         if (this->_fds[i].fd == fd)
         {
-            this->_fds.erase(_fds.begin() + i); // erase needs a iterator, so begin creates the iterator at 0, then we add 'i' so we erase the right one
+            this->_fds.erase(_fds.begin() + i);
             break;
         }
     }
