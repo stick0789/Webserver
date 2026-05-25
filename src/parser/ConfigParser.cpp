@@ -643,7 +643,10 @@ bool ConfigParser::parseReturn(LocationConfig &location)
     std::string url;
     if (hasToken() && getToken() != ";"){
         url = getToken();
-        if(!::isAllowedChars(url, "/._-~%@+")) return (false);
+        bool isAbsolute = (url.compare(0, 7, "http://") == 0
+                        || url.compare(0, 8, "https://") == 0);
+        bool isRelative = (!url.empty() && url[0] == '/');
+        if (!isAbsolute && !isRelative) return (false);
         if(!consumeToken(url)) return (false);
     }
     if (!consumeToken(";")) return (false);
