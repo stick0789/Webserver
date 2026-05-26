@@ -74,12 +74,12 @@ class RequestParser
 
 			
 			//void			feed(Client client);
-			void			feed(const std::string& data);
-			bool			isComplete() const;
-			ParseState		getState() const;
-			HTTPRequest		getRequest() const;
-			void			reset();
-			void			setMaxBodySize(size_t size);
+			void					feed(const std::string& data);
+			bool					isComplete() const;
+			ParseState				getState() const;
+			const HTTPRequest&		getRequest() const;
+			void					reset();
+			void					setMaxBodySize(size_t size);
 
 
 };

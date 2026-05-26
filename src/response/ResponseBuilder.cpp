@@ -497,7 +497,10 @@ void    ResponseBuilder::buildResponse(Client& client)
         _cgi.initEnv(*_location);
         int cgiFD = _cgi.execute();
         if (cgiFD > 0)
+        {
             parsingCGIResponse(cgiFD);
+            _cgi.reapChild();
+        }    
     }
 
     if (_indexFlag == true)
@@ -526,11 +529,10 @@ int    ResponseBuilder::parsingCGIResponse(int fd)
     ssize_t  bytesRead;
     std::string cgiResponse;
     while ((bytesRead = read(fd, &buffer, sizeof(buffer))) > 0)
-    {
-        if (bytesRead < 0)
-            return (1);
-        cgiResponse.append(buffer, bytesRead);
-    }
+            cgiResponse.append(buffer, bytesRead);
+    if (bytesRead < 0)
+        return (close(fd), 1);
+    close(fd);
     std::string cgiHead; 
     std::string cgiBody;
     size_t  sep = cgiResponse.find("\r\n\r\n");

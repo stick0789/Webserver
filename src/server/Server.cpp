@@ -269,7 +269,7 @@ bool Server::readFromClient(int fd)
     {
         return (true);
     }
-    HTTPRequest request = client.getParser().getRequest();
+    const HTTPRequest& request = client.getParser().getRequest();
     if (request.getErrorCode() != 0)
     {
         std::cout << "\033[93m[INFO] Parse error " << request.getErrorCode()

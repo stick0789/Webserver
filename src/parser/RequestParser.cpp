@@ -96,7 +96,7 @@ RequestParser::ParseState RequestParser::getState() const
 	return _state;
 }
 
-HTTPRequest RequestParser::getRequest() const
+const HTTPRequest& RequestParser::getRequest() const
 {
 	return _request;
 }

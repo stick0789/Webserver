@@ -2,7 +2,7 @@ NAME        = webserver
 
 COMPILER    = c++
 
-CFLAGS      = -Wall -Werror -Wextra -std=c++98 -Wshadow
+CFLAGS      = -Wall -Werror -Wextra -std=c++98 -Wshadow #-g -fsanitize=address,leak
 DEBUG_FLAGS = -DDEBUG -g
 
 SRC_DIR     = src/
