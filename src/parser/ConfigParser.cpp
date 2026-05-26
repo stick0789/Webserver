@@ -546,7 +546,19 @@ bool ConfigParser::parseLocationBlock(ServerConfig &server)
 
 bool ConfigParser::parseLocationRoot(LocationConfig &location)
 {
-    return (parseString(location, "root", "/._-", &LocationConfig::setRoot));
+    if (!parseString(location, "root", "/._-%", &LocationConfig::setRoot))
+        return false;
+
+    std::string encodedRoot = location.getRoot();
+    size_t pos;
+    
+    while ((pos = encodedRoot.find("%20")) != std::string::npos) {
+        encodedRoot.replace(pos, 3, " ");
+    }
+
+    location.setRoot(encodedRoot);
+    
+    return (true);
 }
 
 bool ConfigParser::parseLocationIndex(LocationConfig &location)
@@ -576,7 +588,7 @@ bool ConfigParser::parseAllowedMethods(LocationConfig &location)
 
 bool ConfigParser::parseUploadPath(LocationConfig &location)
 {
-    return (parseString(location, "upload_path", "/._-", &LocationConfig::setUploadPath));
+    return (parseString(location, "upload_path", "/._-%", &LocationConfig::setUploadPath));
 }
 
 bool ConfigParser::parseAutoindex(LocationConfig &location)
@@ -599,7 +611,7 @@ bool ConfigParser::parseCGIExtension(LocationConfig &location)
 
 bool ConfigParser::parseCGIpass(LocationConfig &location)
 {
-    return (parseString(location, "cgi_pass", "/._-", &LocationConfig::setCgiPass));
+    return (parseString(location, "cgi_pass", "/._-%", &LocationConfig::setCgiPass));
 }
 
 bool ConfigParser::parseLocation(LocationConfig &location)
